@@ -1,0 +1,5 @@
+{
+  "name": "Thai Radio Player",
+  "description": "A modern radio player for HLS streams with RadioBOSS API integration for real-time metadata.",
+  "requestFramePermissions": []
+}
