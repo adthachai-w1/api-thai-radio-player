@@ -245,6 +245,8 @@ export default function App() {
 
       {/* ─── HEADER ─── */}
       <header className="bg-white border-b border-gray-100 sticky top-0 z-50 shadow-sm">
+
+        {/* Row 1: Logo + Right controls (always visible) */}
         <div className="px-4 md:px-6 py-3 flex items-center gap-3">
 
           {/* Logo */}
@@ -253,42 +255,30 @@ export default function App() {
               <img src={iconKaew} alt="Kukaew" className="w-full h-full object-cover"
                 onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
             </div>
-            <div className="hidden sm:block">
+            <div>
               <h1 className="font-bold text-sm md:text-base leading-tight text-radio-dark">KUKAEW RADIO</h1>
               <p className="text-[9px] md:text-[11px] text-gray-400 font-medium tracking-wider">FM 93.00 MHz</p>
             </div>
           </div>
 
-          {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center gap-6 ml-4">
+          {/* Desktop Nav — centered */}
+          <nav className="hidden md:flex flex-1 items-center justify-center gap-8">
             <button onClick={() => navigateTo('home')}
-              className={`font-semibold text-sm pb-0.5 transition-colors ${page === 'home' ? 'text-radio-dark border-b-2 border-radio-green' : 'text-gray-500 hover:text-radio-dark'}`}>
+              className={`font-semibold text-sm pb-0.5 transition-colors whitespace-nowrap ${page === 'home' ? 'text-radio-dark border-b-2 border-radio-green' : 'text-gray-500 hover:text-radio-dark'}`}>
               หน้าแรก
             </button>
             <button onClick={() => navigateTo('contact')}
-              className={`font-semibold text-sm pb-0.5 transition-colors ${page === 'contact' ? 'text-radio-dark border-b-2 border-radio-green' : 'text-gray-500 hover:text-radio-dark'}`}>
+              className={`font-semibold text-sm pb-0.5 transition-colors whitespace-nowrap ${page === 'contact' ? 'text-radio-dark border-b-2 border-radio-green' : 'text-gray-500 hover:text-radio-dark'}`}>
               ติดต่อโฆษณา
             </button>
           </nav>
 
-          {/* Spacer */}
-          <div className="flex-1" />
-
-          {/* Mobile Nav Pills */}
-          <nav className="flex md:hidden items-center gap-1 flex-shrink-0">
-            <button onClick={() => navigateTo('home')}
-              className={`px-2.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap ${page === 'home' ? 'bg-radio-green text-white' : 'text-gray-500 hover:bg-gray-100'}`}>
-              หน้าแรก
-            </button>
-            <button onClick={() => navigateTo('contact')}
-              className={`px-2.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap ${page === 'contact' ? 'bg-radio-green text-white' : 'text-gray-500 hover:bg-gray-100'}`}>
-              ติดต่อโฆษณา
-            </button>
-          </nav>
+          {/* Spacer mobile */}
+          <div className="flex-1 md:hidden" />
 
           {/* Right controls */}
           <div className="flex items-center gap-2 flex-shrink-0">
-            <div className="hidden lg:flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-100">
+            <div className="hidden sm:flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-100">
               <Users size={13} className="text-gray-400" />
               <span className="text-xs font-semibold text-gray-600">1,254 ผู้ฟัง</span>
             </div>
@@ -298,6 +288,21 @@ export default function App() {
             </button>
           </div>
         </div>
+
+        {/* Row 2: Mobile Nav — full width tab bar */}
+        <div className="md:hidden flex border-t border-gray-100">
+          <button
+            onClick={() => navigateTo('home')}
+            className={`flex-1 py-2.5 text-sm font-semibold transition-colors text-center ${page === 'home' ? 'text-radio-green border-b-2 border-radio-green' : 'text-gray-400'}`}>
+            หน้าแรก
+          </button>
+          <button
+            onClick={() => navigateTo('contact')}
+            className={`flex-1 py-2.5 text-sm font-semibold transition-colors text-center ${page === 'contact' ? 'text-radio-green border-b-2 border-radio-green' : 'text-gray-400'}`}>
+            ติดต่อโฆษณา
+          </button>
+        </div>
+
       </header>
 
       {/* ─── PAGES ─── */}
@@ -460,35 +465,10 @@ export default function App() {
             transition={{ duration: 0.3 }}
             className="flex-1 bg-gray-50 flex flex-col"
           >
-            {/* Hero Banner */}
-            <div className="bg-radio-green relative overflow-hidden">
-              <div className="absolute inset-0 opacity-10 pointer-events-none">
-                <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[200%] bg-white rounded-full blur-3xl"></div>
-                <div className="absolute bottom-[-30%] right-[-10%] w-[40%] h-[150%] bg-white rounded-full blur-3xl"></div>
-              </div>
-              <div className="relative z-10 max-w-4xl mx-auto px-6 py-12 md:py-16 flex flex-col md:flex-row items-center gap-8">
-                {/* Logo */}
-                <div className="w-24 h-24 md:w-32 md:h-32 rounded-3xl bg-white/20 border-2 border-white/30 overflow-hidden shadow-2xl flex-shrink-0 backdrop-blur-sm flex items-center justify-center">
-                  <img
-                    src={iconKaew}
-                    alt="Kukaew Radio Logo"
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      const el = e.target as HTMLImageElement;
-                      el.style.display = 'none';
-                    }}
-                  />
-                </div>
-                <div className="text-center md:text-left">
-                  <p className="text-white/70 text-sm font-bold uppercase tracking-widest mb-2">สถานีวิทยุ</p>
-                  <h1 className="text-3xl md:text-5xl font-bold text-white mb-3">กู่แก้วเรดิโอ</h1>
-                  <p className="text-white/80 text-lg font-medium">FM 93.00 MHz · อำเภอกู่แก้ว อุดรธานี</p>
-                  <div className="mt-4 inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
-                    <Megaphone size={16} className="text-white" />
-                    <span className="text-white text-sm font-semibold">ติดต่อโฆษณากับเรา</span>
-                  </div>
-                </div>
-              </div>
+            {/* Page Title */}
+            <div className="max-w-4xl mx-auto w-full px-4 md:px-6 pt-8">
+              <h1 className="text-2xl font-bold text-radio-dark">ติดต่อโฆษณา</h1>
+              <p className="text-gray-500 text-sm mt-1">สถานีวิทยุกู่แก้วเรดิโอ FM 93.00 MHz</p>
             </div>
 
             {/* Content */}
