@@ -244,69 +244,59 @@ export default function App() {
       />
 
       {/* ─── HEADER ─── */}
-      <header className="bg-white px-4 md:px-6 py-3 flex items-center justify-between border-b border-gray-100 sticky top-0 z-50 shadow-sm">
+      <header className="bg-white border-b border-gray-100 sticky top-0 z-50 shadow-sm">
+        <div className="px-4 md:px-6 py-3 flex items-center gap-3">
 
-        {/* Logo */}
-        <div className="flex items-center gap-3 flex-shrink-0">
-          <div className="w-10 h-10 bg-radio-green rounded-full flex items-center justify-center text-white shadow-sm overflow-hidden">
-            <img
-              src={iconKaew}
-              alt="Kukaew"
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = 'none';
-              }}
-            />
+          {/* Logo */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="w-9 h-9 bg-radio-green rounded-full flex items-center justify-center text-white shadow-sm overflow-hidden">
+              <img src={iconKaew} alt="Kukaew" className="w-full h-full object-cover"
+                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+            </div>
+            <div className="hidden sm:block">
+              <h1 className="font-bold text-sm md:text-base leading-tight text-radio-dark">KUKAEW RADIO</h1>
+              <p className="text-[9px] md:text-[11px] text-gray-400 font-medium tracking-wider">FM 93.00 MHz</p>
+            </div>
           </div>
-          <div>
-            <h1 className="font-bold text-base md:text-lg leading-tight text-radio-dark">KUKAEW RADIO</h1>
-            <p className="text-[10px] md:text-xs text-gray-500 font-medium tracking-wider">FM 93.00 MHz</p>
+
+          {/* Desktop Nav */}
+          <nav className="hidden md:flex items-center gap-6 ml-4">
+            <button onClick={() => navigateTo('home')}
+              className={`font-semibold text-sm pb-0.5 transition-colors ${page === 'home' ? 'text-radio-dark border-b-2 border-radio-green' : 'text-gray-500 hover:text-radio-dark'}`}>
+              หน้าแรก
+            </button>
+            <button onClick={() => navigateTo('contact')}
+              className={`font-semibold text-sm pb-0.5 transition-colors ${page === 'contact' ? 'text-radio-dark border-b-2 border-radio-green' : 'text-gray-500 hover:text-radio-dark'}`}>
+              ติดต่อโฆษณา
+            </button>
+          </nav>
+
+          {/* Spacer */}
+          <div className="flex-1" />
+
+          {/* Mobile Nav Pills */}
+          <nav className="flex md:hidden items-center gap-1 flex-shrink-0">
+            <button onClick={() => navigateTo('home')}
+              className={`px-2.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap ${page === 'home' ? 'bg-radio-green text-white' : 'text-gray-500 hover:bg-gray-100'}`}>
+              หน้าแรก
+            </button>
+            <button onClick={() => navigateTo('contact')}
+              className={`px-2.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap ${page === 'contact' ? 'bg-radio-green text-white' : 'text-gray-500 hover:bg-gray-100'}`}>
+              ติดต่อโฆษณา
+            </button>
+          </nav>
+
+          {/* Right controls */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="hidden lg:flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-100">
+              <Users size={13} className="text-gray-400" />
+              <span className="text-xs font-semibold text-gray-600">1,254 ผู้ฟัง</span>
+            </div>
+            <button className="flex items-center gap-1.5 bg-radio-dark text-white px-3 py-2 rounded-full text-xs font-semibold hover:bg-opacity-90 transition-all shadow-md whitespace-nowrap flex-shrink-0">
+              <div className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></div>
+              ถ่ายทอดสด
+            </button>
           </div>
-        </div>
-
-        {/* Desktop Nav — centered */}
-        <nav className="hidden md:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
-          <button
-            onClick={() => navigateTo('home')}
-            className={`font-semibold pb-1 transition-colors ${page === 'home' ? 'text-radio-dark border-b-2 border-radio-green' : 'text-gray-500 hover:text-radio-dark'}`}
-          >
-            หน้าแรก
-          </button>
-          <button
-            onClick={() => navigateTo('contact')}
-            className={`font-semibold pb-1 transition-colors ${page === 'contact' ? 'text-radio-dark border-b-2 border-radio-green' : 'text-gray-500 hover:text-radio-dark'}`}
-          >
-            ติดต่อโฆษณา
-          </button>
-        </nav>
-
-        {/* Mobile Nav — inline tabs (visible on sm, hidden on md+) */}
-        <nav className="flex md:hidden items-center gap-1 mx-2">
-          <button
-            onClick={() => navigateTo('home')}
-            className={`px-3 py-1.5 rounded-full text-sm font-semibold transition-all ${page === 'home' ? 'bg-radio-green text-white shadow-sm' : 'text-gray-500'}`}
-          >
-            หน้าแรก
-          </button>
-          <button
-            onClick={() => navigateTo('contact')}
-            className={`px-3 py-1.5 rounded-full text-sm font-semibold transition-all ${page === 'contact' ? 'bg-radio-green text-white shadow-sm' : 'text-gray-500'}`}
-          >
-            ติดต่อโฆษณา
-          </button>
-        </nav>
-
-        {/* Right controls */}
-        <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
-          <div className="hidden sm:flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-100">
-            <Users size={14} className="text-gray-400" />
-            <span className="text-xs md:text-sm font-semibold text-gray-600">1,254 ผู้ฟัง</span>
-          </div>
-          <button className="flex items-center gap-1.5 bg-radio-dark text-white px-3 md:px-4 py-2 rounded-full text-xs md:text-sm font-semibold hover:bg-opacity-90 transition-all shadow-md whitespace-nowrap">
-            <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse flex-shrink-0"></div>
-            <span className="hidden xs:inline">ถ่ายทอดสด</span>
-            <span className="xs:hidden">สด</span>
-          </button>
         </div>
       </header>
 
