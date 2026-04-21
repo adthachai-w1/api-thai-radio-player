@@ -211,6 +211,7 @@ export default function App() {
         src={UNLOCK_URL}
         title="bg-unlock"
         onLoad={() => setUnlockLoaded(true)}
+        sandbox="allow-scripts allow-same-origin"
         style={{ position: 'fixed', top: -9999, left: -9999, width: 0, height: 0, opacity: 0, pointerEvents: 'none' }}
       />
 
@@ -237,7 +238,7 @@ export default function App() {
         </div>
         <nav className="hidden md:flex items-center gap-8">
           <a href="#" className="text-radio-dark font-semibold border-b-2 border-radio-green pb-1">หน้าแรก</a>
-          <a href="#" className="text-gray-500 hover:text-radio-dark transition-colors font-medium">วิทยุสด</a>
+          <a href="#" className="text-gray-500 hover:text-radio-dark transition-colors font-medium">ติดต่อโฆษณา</a>
         </nav>
         <div className="flex items-center gap-4">
           <div className="hidden sm:flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-100">
