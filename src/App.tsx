@@ -2,11 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { 
   Play, 
   Pause, 
-  SkipBack, 
-  SkipForward, 
   Heart, 
-  Shuffle, 
-  Repeat, 
   Users, 
   Radio as RadioIcon,
   Phone,
@@ -23,21 +19,93 @@ import {
   X,
   Megaphone,
   Navigation,
-  Home,
   ExternalLink,
-  Menu,
-  ChevronRight
+  Signal
 } from 'lucide-react';
 import iconKaew from "./images/icon-kaew.png";
 import { motion, AnimatePresence } from 'motion/react';
 import COVER_IMAGE_URL from "./images/photo-1.png";
 
+// ─── Leaflet Map Component ───────────────────────────────────────────────────
+function LeafletMap() {
+  const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (mapInstanceRef.current || !mapRef.current) return;
+
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+    document.head.appendChild(link);
+
+    const script = document.createElement('script');
+    script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    script.onload = () => {
+      const L = (window as any).L;
+      const isMobile = window.innerWidth < 768;
+      const map = L.map(mapRef.current, { zoomControl: true, scrollWheelZoom: false }).setView([LAT, LNG], isMobile ? 9 : 10);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(map);
+
+      L.circle([LAT, LNG], {
+        radius: 30000,
+        color: '#4a8c5c', weight: 2, opacity: 0.9,
+        fillColor: '#4a8c5c', fillOpacity: 0.1,
+        dashArray: '8, 5',
+      }).addTo(map);
+
+      L.circle([LAT, LNG], {
+        radius: 15000,
+        color: '#4a8c5c', weight: 1.5, opacity: 0.6,
+        fillColor: '#4a8c5c', fillOpacity: 0.08,
+      }).addTo(map);
+
+      const redIcon = L.icon({
+        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41],
+      });
+
+      const marker = L.marker([LAT, LNG], { icon: redIcon }).addTo(map);
+      marker.bindPopup(`
+        <div style="font-family:sans-serif;padding:4px 2px;min-width:160px;">
+          <div style="font-weight:700;font-size:14px;color:#1a2e1a;margin-bottom:4px;">ระยะสัญญาณ สถานีวิทยุกู่แก้วเรดิโอ</div>
+          <div style="color:#4a8c5c;font-size:12px;font-weight:600;">FM 93.00 MHz</div>
+          <div style="color:#888;font-size:11px;margin-top:2px;">อ.กู่แก้ว จ.อุดรธานี</div>
+        </div> 
+      `).openPopup();
+
+      mapInstanceRef.current = map;
+      setTimeout(() => map.invalidateSize(), 100);
+    };
+    document.head.appendChild(script);
+
+    return () => {
+      if (mapInstanceRef.current) { mapInstanceRef.current.remove(); mapInstanceRef.current = null; }
+    };
+  }, []);
+
+  return <div ref={mapRef} className="w-full h-full" />;
+}
+// ────────────────────────────────────────────────────────────────────────────
+
 const STREAM_URL = "https://uk5freenew.listen2myradio.com/live.mp3?typeportmount=s1_13082_stream_820118366";
 const UNLOCK_URL = "https://fm93kukeawradio.radio12345.com/";
 const LAT = 17.170219;
 const LNG = 103.160999;
-const MAPS_EMBED = `https://maps.google.com/maps?q=${LAT},${LNG}&z=15&output=embed`;
 const MAPS_LINK = `https://www.google.com/maps?q=${LAT},${LNG}`;
+
+// ── Social links — ใส่ URL จริงตรงนี้ ──────────────────────────────────────
+const FACEBOOK_URL = "https://www.facebook.com"; // TODO: เปลี่ยนเป็น URL Facebook ของสถานี
+const YOUTUBE_URL  = "https://www.youtube.com";  // TODO: เปลี่ยนเป็น URL YouTube ของสถานี
+const WEBSITE_URL  = "https://fm93kukeawradio.radio12345.com/"; // เว็บหลัก
+// ────────────────────────────────────────────────────────────────────────────
 
 type Page = 'home' | 'contact';
 
@@ -53,17 +121,40 @@ export default function App() {
   const [showUnlockFrame, setShowUnlockFrame] = useState(false);
   const [showCookieConsent, setShowCookieConsent] = useState(false);
   const [unlockLoaded, setUnlockLoaded] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [liveSeconds, setLiveSeconds] = useState(0);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const intentionalStopRef = useRef(false);
   const retryCountRef = useRef(0);
   const stallTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const liveTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const MAX_RETRIES = 3;
   const STALL_WAIT_MS = 8000;
   const LOAD_TIMEOUT_MS = 45000;
+
+  // ── Live timer ─────────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (isPlaying) {
+      liveTimerRef.current = setInterval(() => {
+        setLiveSeconds(s => s + 1);
+      }, 1000);
+    } else {
+      if (liveTimerRef.current) clearInterval(liveTimerRef.current);
+      setLiveSeconds(0);
+    }
+    return () => { if (liveTimerRef.current) clearInterval(liveTimerRef.current); };
+  }, [isPlaying]);
+
+  const formatLiveTime = (s: number) => {
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sec = s % 60;
+    if (h > 0) return `${h}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+    return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+  };
+  // ──────────────────────────────────────────────────────────────────────────
 
   const loadStream = () => {
     if (!audioRef.current) return;
@@ -166,8 +257,16 @@ export default function App() {
       setShowClosedModal(false);
       setShowSimModal(false);
 
+      // รอ unlock iframe โหลดสูงสุด 5 วินาที แทนที่จะรอ 3 วินาทีเสมอ
       if (!unlockLoaded) {
-        await new Promise(res => setTimeout(res, 3000));
+        await Promise.race([
+          new Promise<void>(res => {
+            const check = setInterval(() => {
+              if (unlockLoaded) { clearInterval(check); res(); }
+            }, 100);
+          }),
+          new Promise<void>(res => setTimeout(res, 5000)),
+        ]);
       }
 
       loadingTimeoutRef.current = setTimeout(() => {
@@ -218,13 +317,12 @@ export default function App() {
 
   const navigateTo = (p: Page) => {
     setPage(p);
-    setMobileMenuOpen(false);
   };
 
   return (
     <div className="min-h-screen flex flex-col">
 
-      {/* Hidden iframe */}
+      {/* Hidden iframe สำหรับ unlock signal */}
       <iframe
         src={UNLOCK_URL}
         title="bg-unlock"
@@ -246,7 +344,7 @@ export default function App() {
       {/* ─── HEADER ─── */}
       <header className="bg-white border-b border-gray-100 sticky top-0 z-50 shadow-sm">
 
-        {/* Row 1: Logo + Right controls (always visible) */}
+        {/* Row 1 */}
         <div className="px-4 md:px-6 py-3 flex items-center gap-3">
 
           {/* Logo */}
@@ -261,7 +359,7 @@ export default function App() {
             </div>
           </div>
 
-          {/* Desktop Nav — centered */}
+          {/* Desktop Nav */}
           <nav className="hidden md:flex flex-1 items-center justify-center gap-8">
             <button onClick={() => navigateTo('home')}
               className={`font-semibold text-sm pb-0.5 transition-colors whitespace-nowrap ${page === 'home' ? 'text-radio-dark border-b-2 border-radio-green' : 'text-gray-500 hover:text-radio-dark'}`}>
@@ -273,15 +371,10 @@ export default function App() {
             </button>
           </nav>
 
-          {/* Spacer mobile */}
           <div className="flex-1 md:hidden" />
 
           {/* Right controls */}
           <div className="flex items-center gap-2 flex-shrink-0">
-            <div className="hidden sm:flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-100">
-              <Users size={13} className="text-gray-400" />
-              <span className="text-xs font-semibold text-gray-600">1,254 ผู้ฟัง</span>
-            </div>
             <button className="flex items-center gap-1.5 bg-radio-dark text-white px-3 py-2 rounded-full text-xs font-semibold hover:bg-opacity-90 transition-all shadow-md whitespace-nowrap flex-shrink-0">
               <div className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></div>
               ถ่ายทอดสด
@@ -289,7 +382,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* Row 2: Mobile Nav — full width tab bar */}
+        {/* Row 2: Mobile tab bar */}
         <div className="md:hidden flex border-t border-gray-100">
           <button
             onClick={() => navigateTo('home')}
@@ -329,6 +422,7 @@ export default function App() {
                 transition={{ duration: 0.6 }}
                 className="glass-card w-full max-w-2xl rounded-[40px] p-8 md:p-10 shadow-2xl flex flex-col md:flex-row items-center gap-6 md:gap-8 relative z-10"
               >
+                {/* Cover Image */}
                 <div className="relative w-64 h-64 md:w-72 md:h-72 rounded-[32px] shadow-2xl overflow-hidden border-4 border-white/20">
                   <img src={COVER_IMAGE_URL} alt="DJ Cover" className="w-full h-full object-cover" />
                   <button
@@ -339,35 +433,59 @@ export default function App() {
                   </button>
                 </div>
 
+                {/* Player Info */}
                 <div className="flex-1 min-w-0 text-center md:text-left">
                   <span className="text-white/70 text-sm font-bold uppercase tracking-widest mb-2 block">กำลังเล่น</span>
                   <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 leading-tight">
                     ฟังเพลงแบบสดๆ<br />พร้อมกันที่นี่
                   </h2>
-                  <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full mb-8">
+
+                  <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full mb-6">
                     <span className="text-[#397D54] text-sm font-medium">ดีเจ จ่าเยี่ยม คนโก้</span>
                     <span className="text-[#397D54] text-xs font-bold uppercase">กำลังจัดรายการ</span>
                   </div>
+
+                  {/* LIVE indicator แทน progress bar */}
                   <div className="mb-8">
-                    <div className="flex justify-between text-white/60 text-xs font-bold mb-2">
-                      <span>03:45</span>
-                      <span>05:20</span>
-                    </div>
-                    <div className="h-2 w-full bg-white/20 rounded-full overflow-hidden relative">
-                      <motion.div
-                        className="absolute top-0 left-0 h-full bg-white rounded-full"
-                        animate={{ width: isPlaying ? "70%" : "40%" }}
-                        transition={{ duration: 1 }}
-                      />
-                      <div className="absolute top-1/2 left-[70%] -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow-md border-2 border-radio-green"></div>
+                    <div className="flex items-center gap-3">
+                      {/* LIVE badge */}
+                      <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full font-bold text-xs tracking-widest ${isPlaying ? 'bg-red-500 text-white' : 'bg-white/20 text-white/60'}`}>
+                        <div className={`w-2 h-2 rounded-full bg-white ${isPlaying ? 'animate-pulse' : 'opacity-40'}`}></div>
+                        LIVE
+                      </div>
+
+                      {/* เวลาที่ฟัง */}
+                      {isPlaying && (
+                        <motion.span
+                          initial={{ opacity: 0, x: -8 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          className="text-white/70 text-sm font-mono font-bold"
+                        >
+                          {formatLiveTime(liveSeconds)}
+                        </motion.span>
+                      )}
+
+                      {/* Signal bars */}
+                      <div className="flex items-end gap-0.5 ml-auto">
+                        {[3, 5, 7, 9, 11].map((h, i) => (
+                          <motion.div
+                            key={i}
+                            animate={{ opacity: isPlaying ? 1 : 0.3 }}
+                            transition={{ delay: i * 0.05 }}
+                            style={{ height: h }}
+                            className={`w-1.5 rounded-full ${isPlaying ? 'bg-white' : 'bg-white/30'}`}
+                          />
+                        ))}
+                      </div>
                     </div>
                   </div>
+
+                  {/* Play controls — เฉพาะ Play/Pause เท่านั้น (live stream) */}
                   <div className="flex items-center justify-center md:justify-start gap-6">
-                    <button className="text-white/60 hover:text-white transition-colors"><Shuffle size={20} /></button>
-                    <button className="text-white/80 hover:text-white transition-colors"><SkipBack size={28} fill="currentColor" /></button>
                     <button
                       onClick={togglePlay}
                       className="w-16 h-16 bg-white text-radio-green rounded-full flex items-center justify-center shadow-xl hover:scale-105 active:scale-95 transition-all relative"
+                      aria-label={isPlaying ? 'หยุดฟัง' : 'เริ่มฟัง'}
                     >
                       {isLoading ? (
                         <div className="w-8 h-8 border-4 border-radio-green/30 border-t-radio-green rounded-full animate-spin"></div>
@@ -377,9 +495,17 @@ export default function App() {
                         <Play size={32} fill="currentColor" className="ml-1" />
                       )}
                     </button>
-                    <button className="text-white/80 hover:text-white transition-colors"><SkipForward size={28} fill="currentColor" /></button>
-                    <button className="text-white/60 hover:text-white transition-colors"><Repeat size={20} /></button>
+
+                    {/* Label ข้างปุ่ม */}
+                    <div className="text-left">
+                      <p className="text-white font-bold text-sm">
+                        {isLoading ? 'กำลังโหลด...' : isPlaying ? 'กำลังออกอากาศ' : 'แตะเพื่อฟัง'}
+                      </p>
+                      <p className="text-white/60 text-xs">FM 93.00 MHz · Live Stream</p>
+                    </div>
                   </div>
+
+                  {/* Volume control */}
                   <div className="mt-8 flex items-center justify-center md:justify-start gap-4">
                     <button onClick={toggleMute} className="text-white/80 hover:text-white transition-colors">
                       {isMuted || volume === 0 ? <VolumeX size={20} /> : <Volume2 size={20} />}
@@ -399,6 +525,8 @@ export default function App() {
                       {isMuted ? '0%' : `${Math.round(volume * 100)}%`}
                     </span>
                   </div>
+
+                  {/* Visualizer bars */}
                   <div className="mt-10 flex items-end justify-center md:justify-start gap-1 h-8">
                     {[...Array(12)].map((_, i) => (
                       <motion.div
@@ -438,17 +566,26 @@ export default function App() {
                 <div className="space-y-6">
                   <h3 className="font-bold text-lg border-b border-white/10 pb-2">ติดตามเรา</h3>
                   <div className="flex gap-4">
-                    <a href="#" className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-radio-green transition-colors"><Facebook size={20} /></a>
-                    <a href="#" className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-radio-green transition-colors"><Globe size={20} /></a>
-                    <a href="#" className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-radio-green transition-colors"><Youtube size={20} /></a>
+                    <a href={FACEBOOK_URL} target="_blank" rel="noopener noreferrer"
+                       className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-radio-green transition-colors" aria-label="Facebook">
+                      <Facebook size={20} />
+                    </a>
+                    <a href={WEBSITE_URL} target="_blank" rel="noopener noreferrer"
+                       className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-radio-green transition-colors" aria-label="เว็บไซต์">
+                      <Globe size={20} />
+                    </a>
+                    <a href={YOUTUBE_URL} target="_blank" rel="noopener noreferrer"
+                       className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-radio-green transition-colors" aria-label="YouTube">
+                      <Youtube size={20} />
+                    </a>
                   </div>
                 </div>
               </div>
               <div className="max-w-7xl mx-auto mt-16 pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-white/40">
-                <p>© 2024 กู่แก้ววิทยุ FM 93.00 MHz. สงวนลิขสิทธิ์</p>
+                <p>© 2025 กู่แก้ววิทยุ FM 93.00 MHz. สงวนลิขสิทธิ์</p>
                 <div className="flex gap-8">
-                  <a href="#" className="hover:text-white transition-colors">นโยบายความเป็นส่วนตัว</a>
-                  <a href="#" className="hover:text-white transition-colors">ข้อกำหนดการใช้งาน</a>
+                  <a href={WEBSITE_URL} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">นโยบายความเป็นส่วนตัว</a>
+                  <a href={WEBSITE_URL} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">ข้อกำหนดการใช้งาน</a>
                 </div>
               </div>
             </footer>
@@ -465,23 +602,17 @@ export default function App() {
             transition={{ duration: 0.3 }}
             className="flex-1 bg-gray-50 flex flex-col"
           >
-            {/* Page Title */}
             <div className="max-w-4xl mx-auto w-full px-4 md:px-6 pt-8">
               <h1 className="text-2xl font-bold text-radio-dark">ติดต่อโฆษณา</h1>
               <p className="text-gray-500 text-sm mt-1">สถานีวิทยุกู่แก้วเรดิโอ FM 93.00 MHz</p>
             </div>
 
-            {/* Content */}
             <div className="max-w-4xl mx-auto w-full px-4 md:px-6 py-10 md:py-14 space-y-8 flex-1">
 
               {/* Contact Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <motion.div
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 }}
-                  className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex flex-col items-center text-center gap-3 hover:shadow-md transition-shadow"
-                >
+                <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+                  className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex flex-col items-center text-center gap-3 hover:shadow-md transition-shadow">
                   <div className="w-14 h-14 bg-radio-green/10 rounded-2xl flex items-center justify-center">
                     <User size={28} className="text-radio-green" />
                   </div>
@@ -491,29 +622,21 @@ export default function App() {
                   </div>
                 </motion.div>
 
-                <motion.div
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.15 }}
-                  className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex flex-col items-center text-center gap-3 hover:shadow-md transition-shadow"
-                >
+                <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+                  className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex flex-col items-center text-center gap-3 hover:shadow-md transition-shadow">
                   <div className="w-14 h-14 bg-radio-green/10 rounded-2xl flex items-center justify-center">
                     <Phone size={28} className="text-radio-green" />
                   </div>
                   <div>
                     <p className="text-xs text-gray-400 font-semibold uppercase tracking-widest mb-1">เบอร์โทรศัพท์</p>
-                    <a href="tel:0819853404" className="text-radio-dark font-bold text-lg hover:text-radio-green transition-colors">
+                    <a href="tel:0819853404" className="inline-flex items-center gap-2 bg-radio-green text-white px-6 py-3 rounded-2xl font-bold hover:bg-opacity-90 transition-all shadow-md">
                       081-985-3404
                     </a>
                   </div>
                 </motion.div>
 
-                <motion.div
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                  className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex flex-col items-center text-center gap-3 hover:shadow-md transition-shadow"
-                >
+                <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+                  className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex flex-col items-center text-center gap-3 hover:shadow-md transition-shadow">
                   <div className="w-14 h-14 bg-radio-green/10 rounded-2xl flex items-center justify-center">
                     <MapPin size={28} className="text-radio-green" />
                   </div>
@@ -527,13 +650,8 @@ export default function App() {
               </div>
 
               {/* Map Section */}
-              <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.25 }}
-                className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden"
-              >
-                {/* Map Header */}
+              <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
+                className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between px-6 py-5 border-b border-gray-100 gap-3">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-radio-green/10 rounded-xl flex items-center justify-center">
@@ -544,46 +662,23 @@ export default function App() {
                       <p className="text-gray-400 text-sm">สถานีวิทยุกู่แก้วเรดิโอ · {LAT}, {LNG}</p>
                     </div>
                   </div>
-                  <a
-                    href={MAPS_LINK}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 bg-radio-green text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-opacity-90 transition-all shadow-md whitespace-nowrap"
-                  >
+                  <a href={MAPS_LINK} target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-2 bg-radio-green text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-opacity-90 transition-all shadow-md whitespace-nowrap">
                     <ExternalLink size={16} />
                     เปิดแผนที่ Google Maps
                   </a>
                 </div>
-
-                {/* Map Iframe */}
                 <div className="relative w-full h-72 md:h-96">
-                  <iframe
-                    title="ตำแหน่งสถานีวิทยุกู่แก้วเรดิโอ"
-                    src={MAPS_EMBED}
-                    className="w-full h-full border-0"
-                    loading="lazy"
-                    referrerPolicy="no-referrer-when-downgrade"
-                    allowFullScreen
-                  />
-                  {/* Floating label */}
-                  <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-white rounded-2xl shadow-lg px-4 py-2 flex items-center gap-2.5 border border-gray-100 pointer-events-none z-10">
-                    <div className="w-3 h-3 bg-red-500 rounded-full flex-shrink-0 ring-2 ring-red-200"></div>
-                    <span className="text-radio-dark font-bold text-sm whitespace-nowrap">สถานีวิทยุกู่แก้วเรดิโอ</span>
-                  </div>
+                  <LeafletMap />
                 </div>
-
-                {/* Bottom bar */}
                 <div className="px-6 py-4 bg-gray-50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                   <div className="flex items-center gap-2 text-gray-500 text-sm">
                     <MapPin size={15} className="text-red-500 flex-shrink-0" />
                     <span>FM 93.00 MHz · อำเภอกู่แก้ว จังหวัดอุดรธานี</span>
                   </div>
-                  <a
-                    href={`https://www.google.com/maps/dir/?api=1&destination=${LAT},${LNG}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-radio-green font-semibold text-sm hover:underline whitespace-nowrap flex items-center gap-1"
-                  >
+                  <a href={`https://www.google.com/maps/dir/?api=1&destination=${LAT},${LNG}`}
+                    target="_blank" rel="noopener noreferrer"
+                    className="text-radio-green font-semibold text-sm hover:underline whitespace-nowrap flex items-center gap-1">
                     <Navigation size={13} />
                     นำทางมาที่นี่
                   </a>
@@ -591,12 +686,8 @@ export default function App() {
               </motion.div>
 
               {/* Ad CTA */}
-              <motion.div
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="bg-radio-green/5 border border-radio-green/20 rounded-3xl p-6 md:p-8"
-              >
+              <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+                className="bg-radio-green/5 border border-radio-green/20 rounded-3xl p-6 md:p-8">
                 <div className="flex flex-col sm:flex-row items-start gap-5">
                   <div className="w-12 h-12 bg-radio-green rounded-2xl flex items-center justify-center flex-shrink-0 shadow-md">
                     <Megaphone size={24} className="text-white" />
@@ -607,10 +698,8 @@ export default function App() {
                       สถานีวิทยุกู่แก้วเรดิโอ FM 93.00 MHz ให้บริการโฆษณาทางวิทยุครอบคลุมพื้นที่อำเภอกู่แก้วและใกล้เคียง
                       ติดต่อสอบถามอัตราค่าโฆษณาและแพ็กเกจพิเศษได้โดยตรง
                     </p>
-                    <a
-                      href="tel:0819853404"
-                      className="inline-flex items-center gap-2 bg-radio-green text-white px-6 py-3 rounded-2xl font-bold hover:bg-opacity-90 transition-all shadow-md"
-                    >
+                    <a href="tel:0819853404"
+                      className="inline-flex items-center gap-2 bg-radio-green text-white px-6 py-3 rounded-2xl font-bold hover:bg-opacity-90 transition-all shadow-md">
                       <Phone size={18} />
                       โทร 081-985-3404
                     </a>
@@ -623,10 +712,10 @@ export default function App() {
             {/* Footer */}
             <footer className="bg-radio-dark text-white px-6 py-10 mt-4">
               <div className="max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-white/40">
-                <p>© 2024 กู่แก้ววิทยุ FM 93.00 MHz. สงวนลิขสิทธิ์</p>
+                <p>© 2025 กู่แก้ววิทยุ FM 93.00 MHz. สงวนลิขสิทธิ์</p>
                 <div className="flex gap-8">
-                  <a href="#" className="hover:text-white transition-colors">นโยบายความเป็นส่วนตัว</a>
-                  <a href="#" className="hover:text-white transition-colors">ข้อกำหนดการใช้งาน</a>
+                  <a href={WEBSITE_URL} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">นโยบายความเป็นส่วนตัว</a>
+                  <a href={WEBSITE_URL} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">ข้อกำหนดการใช้งาน</a>
                 </div>
               </div>
             </footer>
@@ -788,7 +877,7 @@ export default function App() {
                   ยอมรับทั้งหมด
                 </button>
                 <button onClick={() => setShowCookieConsent(false)} className="px-6 py-3 rounded-xl font-bold text-sm text-gray-500 hover:bg-gray-100 transition-all">
-                  ตั้งค่า
+                  ปิด
                 </button>
               </div>
             </div>
