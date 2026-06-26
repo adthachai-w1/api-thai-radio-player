@@ -1,13 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
-import { 
-  Play, 
-  Pause, 
-  SkipBack, 
-  SkipForward, 
-  Heart, 
-  Shuffle, 
-  Repeat, 
-  Users, 
+import {
+  Play,
+  Pause,
+  SkipBack,
+  SkipForward,
+  Heart,
+  Shuffle,
+  Repeat,
+  Users,
   Radio as RadioIcon,
   Phone,
   MapPin,
@@ -27,7 +27,8 @@ import {
   ExternalLink,
   Menu,
   ChevronRight,
-  ShoppingBasket
+  ShoppingBasket,
+  Signal,
 } from 'lucide-react';
 import iconKaew from "./images/icon-kaew.png";
 import { motion, AnimatePresence } from 'motion/react';
@@ -51,45 +52,24 @@ function LeafletMap() {
     script.onload = () => {
       const L = (window as any).L;
       const isMobile = window.innerWidth < 768;
-      const map = L.map(mapRef.current, { zoomControl: true, scrollWheelZoom: false }).setView([LAT, LNG], isMobile ? 9 : 10);
-
+      const map = L.map(mapRef.current, { zoomControl: true, scrollWheelZoom: false }).setView([LAT, LNG], isMobile ? 13 : 14);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 19,
       }).addTo(map);
-
-      L.circle([LAT, LNG], {
-        radius: 30000,
-        color: '#4a8c5c', weight: 2, opacity: 0.9,
-        fillColor: '#4a8c5c', fillOpacity: 0.1,
-        dashArray: '8, 5',
-      }).addTo(map);
-
-      L.circle([LAT, LNG], {
-        radius: 15000,
-        color: '#4a8c5c', weight: 1.5, opacity: 0.6,
-        fillColor: '#4a8c5c', fillOpacity: 0.08,
-      }).addTo(map);
-
-      const redIcon = L.icon({
-        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-        iconSize: [25, 41],
-        iconAnchor: [12, 41],
-        popupAnchor: [1, -34],
-        shadowSize: [41, 41],
+      const customIcon = L.divIcon({
+        html: `<div style="width:36px;height:36px;background:#7D9D85;border:3px solid white;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(125,157,133,0.5)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+        </div>`,
+        className: '',
+        iconSize: [36, 36],
+        iconAnchor: [18, 18],
       });
-
-      const marker = L.marker([LAT, LNG], { icon: redIcon }).addTo(map);
-      marker.bindPopup(`
-        <div style="font-family:sans-serif;padding:4px 2px;min-width:160px;">
-          <div style="font-weight:700;font-size:14px;color:#1a2e1a;margin-bottom:4px;">ระยะสัญญาณ สถานีวิทยุกู่แก้วเรดิโอ</div>
-          <div style="color:#4a8c5c;font-size:12px;font-weight:600;">FM 93.00 MHz</div>
-          <div style="color:#888;font-size:11px;margin-top:2px;">อ.กู่แก้ว จ.อุดรธานี</div>
-        </div> 
-      `).openPopup();
-
+      L.marker([LAT, LNG], { icon: customIcon })
+        .addTo(map)
+        .bindPopup('<b style="color:#4A5D4F">กู่แก้ววิทยุ FM 93.00</b><br>อำเภอกู่แก้ว อุดรธานี')
+        .openPopup();
       mapInstanceRef.current = map;
-      setTimeout(() => map.invalidateSize(), 100);
     };
     document.head.appendChild(script);
 
@@ -100,13 +80,12 @@ function LeafletMap() {
 
   return <div ref={mapRef} className="w-full h-full" />;
 }
-// ────────────────────────────────────────────────────────────────────────────
 
+// ─── Constants ───────────────────────────────────────────────────────────────
 const STREAM_URL = "https://uk5freenew.listen2myradio.com/live.mp3?typeportmount=s1_13082_stream_820118366";
 const UNLOCK_URL = "https://fm93kukeawradio.radio12345.com/";
 const LAT = 17.170219;
 const LNG = 103.160999;
-const MAPS_EMBED = `https://maps.google.com/maps?q=${LAT},${LNG}&z=15&output=embed`;
 const MAPS_LINK = `https://www.google.com/maps?q=${LAT},${LNG}`;
 const SHOPEE_URL = "https://collshp.com/adthachai943/category/3857411?view=storefront";
 
@@ -143,64 +122,63 @@ export default function App() {
   };
 
   const clearStallTimer = () => {
-    if (stallTimerRef.current) {
-      clearTimeout(stallTimerRef.current);
-      stallTimerRef.current = null;
-    }
+    if (stallTimerRef.current) { clearTimeout(stallTimerRef.current); stallTimerRef.current = null; }
   };
 
   const showFailureModal = () => {
     setIsPlaying(false);
     setIsLoading(false);
-    setShowSimModal(true);
+    if (retryCountRef.current < MAX_RETRIES) {
+      retryCountRef.current++;
+      setTimeout(() => {
+        if (!intentionalStopRef.current) {
+          setIsLoading(true);
+          loadStream();
+          audioRef.current?.play().catch(() => showFailureModal());
+        }
+      }, 2000);
+    } else {
+      setShowSimModal(true);
+    }
+  };
+
+  const handleCanPlay = () => {
+    clearStallTimer();
+    if (!intentionalStopRef.current) {
+      setIsLoading(false);
+    }
+  };
+
+  const handlePlaying = () => {
+    clearStallTimer();
+    setIsLoading(false);
+    setIsPlaying(true);
   };
 
   const handleStall = () => {
     if (intentionalStopRef.current) return;
     clearStallTimer();
     stallTimerRef.current = setTimeout(() => {
-      if (!audioRef.current || intentionalStopRef.current) return;
-      if (retryCountRef.current < MAX_RETRIES) {
-        retryCountRef.current++;
-        loadStream();
-        audioRef.current.play().catch(() => {});
-      } else {
-        showFailureModal();
-      }
+      if (!intentionalStopRef.current) showFailureModal();
     }, STALL_WAIT_MS);
   };
 
   const handleError = () => {
-    if (intentionalStopRef.current) return;
-    if (!audioRef.current?.src || audioRef.current.src === window.location.href) return;
-    if (retryCountRef.current < MAX_RETRIES) {
-      retryCountRef.current++;
-      setTimeout(() => {
-        if (intentionalStopRef.current) return;
-        loadStream();
-        audioRef.current?.play().catch(() => {});
-      }, 2000);
-    } else {
-      showFailureModal();
-    }
+    if (!intentionalStopRef.current) showFailureModal();
   };
 
-  const handleCanPlay = () => {
-    clearStallTimer();
-    retryCountRef.current = 0;
-    setIsLoading(false);
-    if (loadingTimeoutRef.current) {
-      clearTimeout(loadingTimeoutRef.current);
-      loadingTimeoutRef.current = null;
-    }
-  };
-
-  const handlePlaying = () => {
-    clearStallTimer();
-    retryCountRef.current = 0;
-    setIsLoading(false);
-    setIsPlaying(true);
-  };
+  useEffect(() => {
+    audioRef.current = new Audio();
+    audioRef.current.oncanplay = handleCanPlay;
+    audioRef.current.onplaying = handlePlaying;
+    audioRef.current.onstalled = handleStall;
+    audioRef.current.onwaiting = handleStall;
+    audioRef.current.onerror = handleError;
+    audioRef.current.preload = "none";
+    return () => {
+      if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = ""; }
+    };
+  }, []);
 
   useEffect(() => {
     if (audioRef.current) {
@@ -242,9 +220,7 @@ export default function App() {
       }
 
       loadingTimeoutRef.current = setTimeout(() => {
-        if (!audioRef.current || audioRef.current.paused) {
-          showFailureModal();
-        }
+        if (!audioRef.current || audioRef.current.paused) showFailureModal();
       }, LOAD_TIMEOUT_MS);
 
       loadStream();
@@ -252,15 +228,10 @@ export default function App() {
         .then(() => {
           setIsPlaying(true);
           setIsLoading(false);
-          if (loadingTimeoutRef.current) {
-            clearTimeout(loadingTimeoutRef.current);
-            loadingTimeoutRef.current = null;
-          }
+          if (loadingTimeoutRef.current) { clearTimeout(loadingTimeoutRef.current); loadingTimeoutRef.current = null; }
         })
         .catch(err => {
-          if (err.name !== 'AbortError') {
-            showFailureModal();
-          }
+          if (err.name !== 'AbortError') showFailureModal();
         });
     }
   };
@@ -292,10 +263,137 @@ export default function App() {
     setMobileMenuOpen(false);
   };
 
-  return (
-    <div className="min-h-screen flex flex-col">
+  // ─── Waveform bars data (staggered heights) ─────────────────────────────
+  const barHeights = [14, 28, 18, 36, 22, 40, 16, 32, 24, 38, 12, 30, 20, 34];
 
-      {/* Hidden iframe */}
+  return (
+    <div className="min-h-screen flex flex-col bg-[#F7F8F6] font-sans">
+
+      {/* ─── INJECT PREMIUM STYLES ─── */}
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800;0,14..32,900;1,14..32,300&display=swap');
+
+        * { font-family: 'Inter', 'Sarabun', sans-serif; }
+
+        :root {
+          --green: #7D9D85;
+          --green-dark: #4A5D4F;
+          --green-deeper: #2D3A31;
+          --green-glow: rgba(125,157,133,0.35);
+          --bg: #F7F8F6;
+          --surface: #FFFFFF;
+          --text: #1A2318;
+        }
+
+        .noise-bg::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+          pointer-events: none;
+          border-radius: inherit;
+        }
+
+        .play-glow {
+          box-shadow: 0 0 0 0 var(--green-glow);
+          transition: box-shadow 0.3s ease;
+        }
+        .play-glow.active {
+          animation: pulse-glow 2s ease-in-out infinite;
+        }
+        @keyframes pulse-glow {
+          0%, 100% { box-shadow: 0 0 0 0 var(--green-glow), 0 8px 32px rgba(125,157,133,0.4); }
+          50% { box-shadow: 0 0 0 20px transparent, 0 8px 48px rgba(125,157,133,0.6); }
+        }
+
+        .glass-premium {
+          background: rgba(255,255,255,0.07);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+          border: 1px solid rgba(255,255,255,0.14);
+        }
+
+        .volume-slider {
+          -webkit-appearance: none;
+          appearance: none;
+          height: 4px;
+          border-radius: 2px;
+          outline: none;
+          cursor: pointer;
+        }
+        .volume-slider::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          width: 14px;
+          height: 14px;
+          border-radius: 50%;
+          background: white;
+          box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+          cursor: pointer;
+        }
+
+        .nav-link {
+          position: relative;
+          font-weight: 600;
+          font-size: 0.875rem;
+          transition: color 0.2s;
+          color: rgba(255,255,255,0.6);
+          letter-spacing: 0.02em;
+        }
+        .nav-link::after {
+          content: '';
+          position: absolute;
+          bottom: -2px;
+          left: 0;
+          width: 0;
+          height: 2px;
+          background: #7D9D85;
+          border-radius: 1px;
+          transition: width 0.25s ease;
+        }
+        .nav-link.active { color: white; }
+        .nav-link.active::after { width: 100%; }
+        .nav-link:hover:not(.active) { color: rgba(255,255,255,0.85); }
+
+        .badge-live {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          padding: 3px 10px;
+          background: rgba(239,68,68,0.15);
+          border: 1px solid rgba(239,68,68,0.3);
+          border-radius: 999px;
+          font-size: 11px;
+          font-weight: 700;
+          color: #ff6b6b;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+        .badge-live .dot {
+          width: 6px; height: 6px;
+          background: #ef4444;
+          border-radius: 50%;
+          animation: blink 1.2s ease-in-out infinite;
+        }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+        .contact-card {
+          background: white;
+          border: 1px solid rgba(74,93,79,0.08);
+          border-radius: 20px;
+          padding: 24px;
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .contact-card:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 12px 40px rgba(74,93,79,0.12);
+        }
+
+        .footer-dark {
+          background: var(--green-deeper);
+        }
+      `}</style>
+
+      {/* Hidden iframe unlock */}
       <iframe
         src={UNLOCK_URL}
         title="bg-unlock"
@@ -314,366 +412,483 @@ export default function App() {
         preload="none"
       />
 
-      {/* ─── HEADER ─── */}
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-50 shadow-sm">
-        <div className="px-4 md:px-6 py-3 flex items-center gap-3">
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <div className="w-9 h-9 bg-radio-green rounded-full flex items-center justify-center text-white shadow-sm overflow-hidden">
+      {/* ─── PREMIUM HEADER ─── */}
+      <header style={{ background: 'var(--green-deeper)', borderBottom: '1px solid rgba(255,255,255,0.08)' }} className="sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 md:px-8 h-16 flex items-center gap-6">
+
+          {/* Logo */}
+          <div className="flex items-center gap-3 flex-shrink-0">
+            <div className="w-9 h-9 rounded-full overflow-hidden ring-2 ring-white/20">
               <img src={iconKaew} alt="Kukaew" className="w-full h-full object-cover"
                 onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
             </div>
             <div>
-              <h1 className="font-bold text-sm md:text-base leading-tight text-radio-dark">KUKAEW RADIO</h1>
-              <p className="text-[9px] md:text-[11px] text-gray-400 font-medium tracking-wider">FM 93.00 MHz</p>
+              <div className="text-white font-bold text-sm leading-none tracking-wider">KUKAEW RADIO</div>
+              <div className="text-white/40 text-[10px] tracking-widest mt-0.5 font-medium">FM 93.00 MHz</div>
             </div>
           </div>
 
-          <nav className="hidden md:flex flex-1 items-center justify-center gap-8">
-            <button onClick={() => navigateTo('home')}
-              className={`font-semibold text-sm pb-0.5 transition-colors whitespace-nowrap ${page === 'home' ? 'text-radio-dark border-b-2 border-radio-green' : 'text-gray-500 hover:text-radio-dark'}`}>
-              หน้าแรก
-            </button>
-            <button onClick={() => navigateTo('contact')}
-              className={`font-semibold text-sm pb-0.5 transition-colors whitespace-nowrap ${page === 'contact' ? 'text-radio-dark border-b-2 border-radio-green' : 'text-gray-500 hover:text-radio-dark'}`}>
-              ติดต่อโฆษณา
-            </button>
+          {/* Desktop nav */}
+          <nav className="hidden md:flex flex-1 items-center justify-center gap-10">
+            <button onClick={() => navigateTo('home')} className={`nav-link ${page === 'home' ? 'active' : ''}`}>หน้าแรก</button>
+            <button onClick={() => navigateTo('contact')} className={`nav-link ${page === 'contact' ? 'active' : ''}`}>ติดต่อโฆษณา</button>
           </nav>
 
-          <div className="flex-1 md:hidden" />
-
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <div className="hidden sm:flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-100">
-              <Users size={13} className="text-gray-400" />
-              <span className="text-xs font-semibold text-gray-600">1,254 ผู้ฟัง</span>
+          {/* Right section */}
+          <div className="flex items-center gap-3 ml-auto">
+            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full" style={{ background: 'rgba(125,157,133,0.15)', border: '1px solid rgba(125,157,133,0.2)' }}>
+              <Users size={12} className="text-green-400" />
+              <span className="text-xs font-semibold text-white/70">1,254</span>
             </div>
-            <button className="flex items-center gap-1.5 bg-radio-dark text-white px-3 py-2 rounded-full text-xs font-semibold hover:bg-opacity-90 transition-all shadow-md whitespace-nowrap flex-shrink-0">
-              <div className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></div>
-              ถ่ายทอดสด
+            <div className="badge-live">
+              <span className="dot" />
+              LIVE
+            </div>
+            {/* Mobile hamburger */}
+            <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="md:hidden w-8 h-8 flex items-center justify-center text-white/70 hover:text-white transition-colors">
+              {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
           </div>
         </div>
 
-        <div className="md:hidden flex border-t border-gray-100">
-          <button
-            onClick={() => navigateTo('home')}
-            className={`flex-1 py-2.5 text-sm font-semibold transition-colors text-center ${page === 'home' ? 'text-radio-green border-b-2 border-radio-green' : 'text-gray-400'}`}>
-            หน้าแรก
-          </button>
-          <button
-            onClick={() => navigateTo('contact')}
-            className={`flex-1 py-2.5 text-sm font-semibold transition-colors text-center ${page === 'contact' ? 'text-radio-green border-b-2 border-radio-green' : 'text-gray-400'}`}>
-            ติดต่อโฆษณา
-          </button>
-        </div>
+        {/* Mobile menu */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              style={{ borderTop: '1px solid rgba(255,255,255,0.08)', background: 'var(--green-deeper)' }}
+              className="md:hidden overflow-hidden"
+            >
+              <div className="px-6 py-4 flex flex-col gap-1">
+                <button onClick={() => navigateTo('home')} className={`text-left py-3 px-4 rounded-xl font-semibold text-sm transition-all ${page === 'home' ? 'bg-white/10 text-white' : 'text-white/60 hover:text-white hover:bg-white/5'}`}>
+                  หน้าแรก
+                </button>
+                <button onClick={() => navigateTo('contact')} className={`text-left py-3 px-4 rounded-xl font-semibold text-sm transition-all ${page === 'contact' ? 'bg-white/10 text-white' : 'text-white/60 hover:text-white hover:bg-white/5'}`}>
+                  ติดต่อโฆษณา
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </header>
 
       {/* ─── PAGES ─── */}
       <AnimatePresence mode="wait">
 
-        {/* HOME PAGE */}
+        {/* ═══ HOME PAGE ═══ */}
         {page === 'home' && (
-          <motion.div
-            key="home"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
-            className="flex-1 flex flex-col"
-          >
-            <main className="flex-1 bg-radio-green flex items-center justify-center p-6 relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
-                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-white rounded-full blur-3xl"></div>
-                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-white rounded-full blur-3xl"></div>
+          <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }} className="flex-1 flex flex-col">
+
+            {/* HERO PLAYER — Dark forest stage */}
+            <section className="relative overflow-hidden noise-bg" style={{ background: 'linear-gradient(135deg, #1A2A1E 0%, #2D3A31 45%, #3A4D3E 100%)', minHeight: '520px' }}>
+
+              {/* Ambient radial glows */}
+              <div className="absolute inset-0 pointer-events-none">
+                <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full opacity-20" style={{ background: 'radial-gradient(circle, #7D9D85 0%, transparent 70%)' }} />
+                <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full opacity-15" style={{ background: 'radial-gradient(circle, #4A5D4F 0%, transparent 70%)' }} />
               </div>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-                className="glass-card w-full max-w-2xl rounded-[40px] p-8 md:p-10 shadow-2xl flex flex-col md:flex-row items-center gap-6 md:gap-8 relative z-10"
-              >
-                <div className="relative w-64 h-64 md:w-72 md:h-72 rounded-[32px] shadow-2xl overflow-hidden border-4 border-white/20">
-                  <img src={COVER_IMAGE_URL} alt="DJ Cover" className="w-full h-full object-cover" />
-                  <button
-                    onClick={() => setIsLiked(!isLiked)}
-                    className={`absolute bottom-4 right-4 w-12 h-12 rounded-full flex items-center justify-center shadow-lg z-30 transition-all ${isLiked ? 'bg-red-500 text-white' : 'bg-white text-gray-400 hover:text-red-500'}`}
-                  >
-                    <Heart size={24} fill={isLiked ? "currentColor" : "none"} />
-                  </button>
+
+              <div className="relative z-10 max-w-5xl mx-auto px-4 md:px-8 py-12 md:py-16 flex flex-col md:flex-row items-center gap-10 md:gap-16">
+
+                {/* Cover Art */}
+                <div className="flex-shrink-0 relative group">
+                  {/* Outer glow ring when playing */}
+                  <motion.div
+                    animate={isPlaying ? { scale: [1, 1.06, 1], opacity: [0.4, 0.7, 0.4] } : { scale: 1, opacity: 0 }}
+                    transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+                    className="absolute inset-[-12px] rounded-[36px]"
+                    style={{ background: 'radial-gradient(circle, rgba(125,157,133,0.4) 0%, transparent 70%)' }}
+                  />
+                  <div className="relative w-56 h-56 md:w-64 md:h-64 rounded-[28px] overflow-hidden shadow-2xl" style={{ border: '2px solid rgba(255,255,255,0.1)', boxShadow: '0 32px 80px rgba(0,0,0,0.5)' }}>
+                    <img src={COVER_IMAGE_URL} alt="DJ Cover" className="w-full h-full object-cover" />
+                    {/* Overlay shimmer */}
+                    <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, transparent 60%)' }} />
+                    {/* Like button */}
+                    <button
+                      onClick={() => setIsLiked(!isLiked)}
+                      className="absolute bottom-3 right-3 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200"
+                      style={{ background: isLiked ? '#ef4444' : 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.2)' }}
+                      aria-label="ถูกใจ"
+                    >
+                      <Heart size={18} fill={isLiked ? 'white' : 'none'} className="text-white" />
+                    </button>
+                  </div>
                 </div>
 
-                <div className="flex-1 min-w-0 text-center md:text-left">
-                  <span className="text-white/70 text-sm font-bold uppercase tracking-widest mb-2 block">กำลังเล่น</span>
-                  <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 leading-tight">
-                    ฟังเพลงแบบสดๆ<br />พร้อมกันที่นี่
-                  </h2>
-                  <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full mb-8">
-                    <span className="text-[#397D54] text-sm font-medium">ดีเจ จ่าเยี่ยม คนโก้</span>
-                    <span className="text-[#397D54] text-xs font-bold uppercase">กำลังจัดรายการ</span>
-                  </div>
-                  <div className="mb-8">
-                    <div className="flex justify-between text-white/60 text-xs font-bold mb-2">
-                      <span>03:45</span>
-                      <span>05:20</span>
+                {/* Player Controls */}
+                <div className="flex-1 flex flex-col items-center md:items-start gap-6 text-white w-full">
+
+                  {/* Track info */}
+                  <div className="text-center md:text-left">
+                    <div className="flex items-center gap-2 mb-3 justify-center md:justify-start">
+                      <div className="badge-live"><span className="dot" />LIVE ON AIR</div>
                     </div>
-                    <div className="h-2 w-full bg-white/20 rounded-full overflow-hidden relative">
+                    <h2 className="text-3xl md:text-4xl font-black tracking-tight text-white leading-tight">กู่แก้ววิทยุ</h2>
+                    <p className="text-white/50 text-sm mt-1 tracking-wider font-medium">FM 93.00 MHz · เพลงลูกทุ่ง · หมอลำ</p>
+                  </div>
+
+                  {/* Waveform visualizer */}
+                  <div className="flex items-end gap-[3px] h-10">
+                    {barHeights.map((h, i) => (
                       <motion.div
-                        className="absolute top-0 left-0 h-full bg-white rounded-full"
-                        animate={{ width: isPlaying ? "70%" : "40%" }}
-                        transition={{ duration: 1 }}
+                        key={i}
+                        animate={isPlaying ? { height: [4, h, h * 0.5, h * 0.8, 4] } : { height: 3 }}
+                        transition={isPlaying ? { duration: 1.2, repeat: Infinity, delay: i * 0.08, ease: 'easeInOut' } : { duration: 0.4 }}
+                        className="rounded-full flex-shrink-0"
+                        style={{ width: '3px', background: `rgba(125,157,133,${isPlaying ? 0.9 : 0.3})` }}
                       />
-                      <div className="absolute top-1/2 left-[70%] -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow-md border-2 border-radio-green"></div>
-                    </div>
+                    ))}
                   </div>
-                  <div className="flex items-center justify-center md:justify-start gap-6">
-                    <button className="text-white/60 hover:text-white transition-colors"><Shuffle size={20} /></button>
-                    <button className="text-white/80 hover:text-white transition-colors"><SkipBack size={28} fill="currentColor" /></button>
+
+                  {/* Transport controls */}
+                  <div className="flex items-center gap-5">
+                    <button className="text-white/30 hover:text-white/60 transition-colors" aria-label="สุ่มเพลง">
+                      <Shuffle size={18} />
+                    </button>
+                    <button className="text-white/40 hover:text-white/70 transition-colors" aria-label="เพลงก่อนหน้า">
+                      <SkipBack size={22} fill="currentColor" />
+                    </button>
+
+                    {/* Main play button */}
                     <button
                       onClick={togglePlay}
-                      className="w-16 h-16 bg-white text-radio-green rounded-full flex items-center justify-center shadow-xl hover:scale-105 active:scale-95 transition-all relative"
+                      className={`play-glow relative w-16 h-16 rounded-full flex items-center justify-center transition-all duration-200 active:scale-95 ${isPlaying ? 'active' : ''}`}
+                      style={{ background: 'linear-gradient(135deg, #7D9D85 0%, #5A7A62 100%)', boxShadow: isPlaying ? '0 8px 32px rgba(125,157,133,0.5)' : '0 4px 16px rgba(0,0,0,0.3)' }}
+                      aria-label={isPlaying ? 'หยุด' : 'เล่น'}
                     >
                       {isLoading ? (
-                        <div className="w-8 h-8 border-4 border-radio-green/30 border-t-radio-green rounded-full animate-spin"></div>
+                        <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                       ) : isPlaying ? (
-                        <Pause size={32} fill="currentColor" />
+                        <Pause size={28} fill="white" className="text-white" />
                       ) : (
-                        <Play size={32} fill="currentColor" className="ml-1" />
+                        <Play size={28} fill="white" className="text-white ml-1" />
                       )}
                     </button>
-                    <button className="text-white/80 hover:text-white transition-colors"><SkipForward size={28} fill="currentColor" /></button>
-                    <button className="text-white/60 hover:text-white transition-colors"><Repeat size={20} /></button>
-                  </div>
-                  <div className="mt-8 flex items-center justify-center md:justify-start gap-4">
-                    <button onClick={toggleMute} className="text-white/80 hover:text-white transition-colors">
-                      {isMuted || volume === 0 ? <VolumeX size={20} /> : <Volume2 size={20} />}
+
+                    <button className="text-white/40 hover:text-white/70 transition-colors" aria-label="เพลงถัดไป">
+                      <SkipForward size={22} fill="currentColor" />
                     </button>
-                    <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm p-1 rounded-xl">
-                      <button onClick={() => adjustVolume(-0.1)} className="w-8 h-8 flex items-center justify-center text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-all">
-                        <Minus size={16} />
-                      </button>
-                      <div className="w-24 h-1.5 bg-white/20 rounded-full overflow-hidden">
-                        <motion.div className="h-full bg-white" animate={{ width: isMuted ? "0%" : `${volume * 100}%` }} />
-                      </div>
-                      <button onClick={() => adjustVolume(0.1)} className="w-8 h-8 flex items-center justify-center text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-all">
-                        <Plus size={16} />
-                      </button>
+                    <button className="text-white/30 hover:text-white/60 transition-colors" aria-label="เล่นซ้ำ">
+                      <Repeat size={18} />
+                    </button>
+                  </div>
+
+                  {/* Volume control */}
+                  <div className="flex items-center gap-3 w-full max-w-[240px]">
+                    <button onClick={toggleMute} className="text-white/50 hover:text-white transition-colors flex-shrink-0" aria-label={isMuted ? 'เปิดเสียง' : 'ปิดเสียง'}>
+                      {isMuted || volume === 0 ? <VolumeX size={18} /> : <Volume2 size={18} />}
+                    </button>
+                    <div className="flex-1 relative">
+                      <input
+                        type="range"
+                        min="0"
+                        max="1"
+                        step="0.01"
+                        value={isMuted ? 0 : volume}
+                        onChange={(e) => {
+                          const v = parseFloat(e.target.value);
+                          setVolume(v);
+                          if (v > 0) setIsMuted(false);
+                        }}
+                        className="volume-slider w-full"
+                        style={{
+                          background: `linear-gradient(to right, #7D9D85 0%, #7D9D85 ${(isMuted ? 0 : volume) * 100}%, rgba(255,255,255,0.15) ${(isMuted ? 0 : volume) * 100}%, rgba(255,255,255,0.15) 100%)`
+                        }}
+                      />
                     </div>
-                    <span className="text-white/60 text-xs font-bold w-8">
+                    <span className="text-white/40 text-xs font-bold w-8 text-right tabular-nums">
                       {isMuted ? '0%' : `${Math.round(volume * 100)}%`}
                     </span>
                   </div>
-                  <div className="mt-10 flex items-end justify-center md:justify-start gap-1 h-8">
-                    {[...Array(12)].map((_, i) => (
-                      <motion.div
-                        key={i}
-                        animate={{ height: isPlaying ? [8, 24, 12, 32, 16][i % 5] : 4 }}
-                        transition={{ duration: 0.5, repeat: Infinity, repeatType: "reverse", delay: i * 0.1 }}
-                        className="w-1.5 bg-white/40 rounded-full"
-                      />
+                </div>
+              </div>
+            </section>
+
+            {/* ─── FEATURE CARDS STRIP ─── */}
+            <section className="py-10 px-4 md:px-8 max-w-5xl mx-auto w-full">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+                {/* Card 1 - Frequency */}
+                <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+                  className="contact-card flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg, rgba(125,157,133,0.15), rgba(74,93,79,0.1))' }}>
+                    <RadioIcon size={22} style={{ color: 'var(--green)' }} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold tracking-widest uppercase" style={{ color: 'var(--green)' }}>ความถี่</p>
+                    <p className="font-black text-xl" style={{ color: 'var(--green-deeper)' }}>FM 93.00</p>
+                    <p className="text-xs text-gray-400">MHz · ออกอากาศ 24 ชม.</p>
+                  </div>
+                </motion.div>
+
+                {/* Card 2 - Listeners */}
+                <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+                  className="contact-card flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg, rgba(125,157,133,0.15), rgba(74,93,79,0.1))' }}>
+                    <Users size={22} style={{ color: 'var(--green)' }} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold tracking-widest uppercase" style={{ color: 'var(--green)' }}>ผู้ฟัง</p>
+                    <p className="font-black text-xl" style={{ color: 'var(--green-deeper)' }}>1,254+</p>
+                    <p className="text-xs text-gray-400">ผู้ฟังออนไลน์ขณะนี้</p>
+                  </div>
+                </motion.div>
+
+                {/* Card 3 - Signal */}
+                <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+                  className="contact-card flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg, rgba(125,157,133,0.15), rgba(74,93,79,0.1))' }}>
+                    <Signal size={22} style={{ color: 'var(--green)' }} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold tracking-widest uppercase" style={{ color: 'var(--green)' }}>สัญญาณ</p>
+                    <p className="font-black text-xl" style={{ color: 'var(--green-deeper)' }}>ยอดเยี่ยม</p>
+                    <p className="text-xs text-gray-400">HD Quality · No Ads</p>
+                  </div>
+                </motion.div>
+              </div>
+            </section>
+
+            {/* ─── ABOUT SECTION ─── */}
+            <section className="py-10 px-4 md:px-8 max-w-5xl mx-auto w-full">
+              <div className="rounded-[24px] overflow-hidden" style={{ background: 'white', border: '1px solid rgba(74,93,79,0.08)' }}>
+                <div className="p-8 md:p-10 flex flex-col md:flex-row gap-8">
+                  <div className="flex-1">
+                    <p className="text-xs font-bold tracking-widest uppercase mb-3" style={{ color: 'var(--green)' }}>เกี่ยวกับเรา</p>
+                    <h3 className="text-2xl font-black mb-4" style={{ color: 'var(--green-deeper)' }}>เสียงแห่งจิตวิญญาณอีสาน</h3>
+                    <p className="text-gray-500 leading-relaxed text-sm">
+                      กู่แก้ววิทยุ FM 93.00 MHz คือสถานีวิทยุชุมชนที่นำเสนอเพลงหมอลำ ลูกทุ่งอีสาน และข่าวสารท้องถิ่น ครอบคลุมพื้นที่อำเภอกู่แก้ว จังหวัดอุดรธานี และบริเวณใกล้เคียง พร้อมออกอากาศออนไลน์ให้ฟังได้ทั่วโลก
+                    </p>
+                    <div className="mt-6 flex flex-wrap gap-3">
+                      <span className="px-4 py-1.5 rounded-full text-xs font-semibold" style={{ background: 'rgba(125,157,133,0.1)', color: 'var(--green-dark)' }}>หมอลำ</span>
+                      <span className="px-4 py-1.5 rounded-full text-xs font-semibold" style={{ background: 'rgba(125,157,133,0.1)', color: 'var(--green-dark)' }}>ลูกทุ่ง</span>
+                      <span className="px-4 py-1.5 rounded-full text-xs font-semibold" style={{ background: 'rgba(125,157,133,0.1)', color: 'var(--green-dark)' }}>ข่าวชุมชน</span>
+                      <span className="px-4 py-1.5 rounded-full text-xs font-semibold" style={{ background: 'rgba(125,157,133,0.1)', color: 'var(--green-dark)' }}>ออนไลน์ 24/7</span>
+                    </div>
+                  </div>
+                  <div className="flex-shrink-0 flex flex-col gap-4 min-w-[180px]">
+                    <div className="p-4 rounded-2xl text-center" style={{ background: 'var(--bg)' }}>
+                      <p className="text-3xl font-black" style={{ color: 'var(--green)' }}>93.0</p>
+                      <p className="text-xs text-gray-400 font-semibold tracking-wider">MHz FM</p>
+                    </div>
+                    <div className="p-4 rounded-2xl text-center" style={{ background: 'var(--bg)' }}>
+                      <p className="text-3xl font-black" style={{ color: 'var(--green)' }}>24/7</p>
+                      <p className="text-xs text-gray-400 font-semibold tracking-wider">ออกอากาศ</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* ─── FOOTER ─── */}
+            <footer className="footer-dark text-white mt-auto">
+              <div className="max-w-5xl mx-auto px-4 md:px-8 py-12 md:py-16 grid grid-cols-1 md:grid-cols-3 gap-10">
+
+                {/* Brand */}
+                <div>
+                  <div className="flex items-center gap-3 mb-5">
+                    <div className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-white/10">
+                      <img src={iconKaew} alt="Kukaew" className="w-full h-full object-cover"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                    </div>
+                    <div>
+                      <div className="font-bold text-base tracking-wide">KUKAEW RADIO</div>
+                      <div className="text-white/40 text-xs">FM 93.00 MHz</div>
+                    </div>
+                  </div>
+                  <p className="text-white/50 text-sm leading-relaxed">
+                    นำเสนอเสียงเพลงแห่งจิตวิญญาณอีสานแท้ๆ ทั้งหมอลำ ลูกทุ่ง และบรรยากาศชุมชน
+                  </p>
+                </div>
+
+                {/* Contact */}
+                <div>
+                  <h3 className="font-bold text-sm tracking-wider uppercase text-white/60 mb-5">ติดต่อเรา</h3>
+                  <ul className="space-y-3">
+                    <li className="flex items-center gap-3 text-sm text-white/60">
+                      <Phone size={15} style={{ color: 'var(--green)' }} />
+                      0819853404
+                    </li>
+                    <li className="flex items-center gap-3 text-sm text-white/60">
+                      <MapPin size={15} style={{ color: 'var(--green)' }} />
+                      อำเภอกู่แก้ว, จังหวัดอุดรธานี
+                    </li>
+                    <li className="flex items-center gap-3 text-sm text-white/60">
+                      <User size={15} style={{ color: 'var(--green)' }} />
+                      จ่าเยี่ยม คนโก้
+                    </li>
+                  </ul>
+                </div>
+
+                {/* Social */}
+                <div>
+                  <h3 className="font-bold text-sm tracking-wider uppercase text-white/60 mb-5">ติดตามเรา</h3>
+                  <div className="flex gap-3 mb-6">
+                    <a href="#" aria-label="Facebook" className="w-10 h-10 rounded-full flex items-center justify-center transition-all hover:scale-110"
+                      style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                      <Facebook size={18} className="text-white/70" />
+                    </a>
+                    <a href="https://s.shopee.co.th/30lJC2Kxaa?share_channel_code=6" target="_blank" rel="noopener noreferrer" aria-label="Shopee"
+                      className="w-10 h-10 rounded-full flex items-center justify-center transition-all hover:scale-110"
+                      style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                      <img src="https://cdn.simpleicons.org/shopee/FFFFFF" alt="Shopee" className="w-4 h-4 opacity-70" />
+                    </a>
+                    <a href="#" aria-label="Youtube" className="w-10 h-10 rounded-full flex items-center justify-center transition-all hover:scale-110"
+                      style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                      <Youtube size={18} className="text-white/70" />
+                    </a>
+                  </div>
+                  <button onClick={() => navigateTo('contact')}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-semibold text-sm transition-all hover:opacity-90"
+                    style={{ background: 'var(--green)', color: 'white' }}>
+                    <Megaphone size={15} />
+                    ลงโฆษณา
+                  </button>
+                </div>
+              </div>
+
+              <div className="border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+                <div className="max-w-5xl mx-auto px-4 md:px-8 py-5 flex flex-col sm:flex-row justify-between items-center gap-3 text-xs text-white/30">
+                  <p>© 2024 กู่แก้ววิทยุ FM 93.00 MHz. สงวนลิขสิทธิ์</p>
+                  <div className="flex gap-6">
+                    <a href="#" className="hover:text-white/60 transition-colors">นโยบายความเป็นส่วนตัว</a>
+                    <a href="#" className="hover:text-white/60 transition-colors">ข้อกำหนดการใช้งาน</a>
+                  </div>
+                </div>
+              </div>
+            </footer>
+          </motion.div>
+        )}
+
+        {/* ═══ CONTACT PAGE ═══ */}
+        {page === 'contact' && (
+          <motion.div key="contact" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.3 }}
+            className="flex-1 flex flex-col" style={{ background: 'var(--bg)' }}>
+
+            {/* Page Hero */}
+            <div className="noise-bg relative overflow-hidden py-14 px-4 md:px-8"
+              style={{ background: 'linear-gradient(135deg, #1A2A1E 0%, #2D3A31 100%)' }}>
+              <div className="absolute inset-0 pointer-events-none">
+                <div className="absolute top-0 right-0 w-[40%] h-full opacity-10" style={{ background: 'radial-gradient(circle at 80% 50%, #7D9D85 0%, transparent 70%)' }} />
+              </div>
+              <div className="relative z-10 max-w-5xl mx-auto">
+                <p className="text-xs font-bold tracking-widest uppercase mb-3" style={{ color: 'var(--green)' }}>Get In Touch</p>
+                <h1 className="text-3xl md:text-4xl font-black text-white mb-2">ติดต่อโฆษณา</h1>
+                <p className="text-white/50 text-sm">สถานีวิทยุกู่แก้วเรดิโอ FM 93.00 MHz · อุดรธานี</p>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 max-w-5xl mx-auto w-full px-4 md:px-8 py-10 space-y-8">
+
+              {/* Contact cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="contact-card flex flex-col items-center text-center gap-4">
+                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(125,157,133,0.15), rgba(74,93,79,0.08))' }}>
+                    <User size={26} style={{ color: 'var(--green)' }} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color: 'var(--green)' }}>ผู้จัดการสถานี</p>
+                    <p className="font-bold text-lg" style={{ color: 'var(--green-deeper)' }}>จ่าเยี่ยม คนโก้</p>
+                  </div>
+                </motion.div>
+
+                <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="contact-card flex flex-col items-center text-center gap-4">
+                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(125,157,133,0.15), rgba(74,93,79,0.08))' }}>
+                    <Phone size={26} style={{ color: 'var(--green)' }} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color: 'var(--green)' }}>โทรศัพท์</p>
+                    <a href="tel:0819853404" className="font-bold text-lg hover:underline" style={{ color: 'var(--green-deeper)' }}>081-985-3404</a>
+                  </div>
+                </motion.div>
+
+                <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="contact-card flex flex-col items-center text-center gap-4">
+                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(125,157,133,0.15), rgba(74,93,79,0.08))' }}>
+                    <MapPin size={26} style={{ color: 'var(--green)' }} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color: 'var(--green)' }}>ที่ตั้ง</p>
+                    <p className="font-bold text-base" style={{ color: 'var(--green-deeper)' }}>อำเภอกู่แก้ว</p>
+                    <p className="text-gray-400 text-sm">จังหวัดอุดรธานี</p>
+                  </div>
+                </motion.div>
+              </div>
+
+              {/* Ad rates */}
+              <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+                className="rounded-[24px] overflow-hidden" style={{ background: 'white', border: '1px solid rgba(74,93,79,0.08)' }}>
+                <div className="p-8 md:p-10">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ background: 'rgba(125,157,133,0.12)' }}>
+                      <Megaphone size={20} style={{ color: 'var(--green)' }} />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-lg" style={{ color: 'var(--green-deeper)' }}>แพ็กเกจโฆษณา</h3>
+                      <p className="text-gray-400 text-sm">เลือกแพ็กเกจที่เหมาะกับธุรกิจของคุณ</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {[
+                      { name: 'Basic', spots: '30 วินาที', times: '3 ครั้ง / วัน', badge: null },
+                      { name: 'Standard', spots: '60 วินาที', times: '5 ครั้ง / วัน', badge: 'แนะนำ' },
+                      { name: 'Premium', spots: '90 วินาที', times: '10 ครั้ง / วัน', badge: null },
+                    ].map((pkg, i) => (
+                      <div key={i} className="relative p-5 rounded-2xl flex flex-col gap-2" style={{
+                        background: pkg.badge ? 'linear-gradient(135deg, rgba(125,157,133,0.12), rgba(74,93,79,0.06))' : 'var(--bg)',
+                        border: pkg.badge ? '1.5px solid rgba(125,157,133,0.3)' : '1.5px solid rgba(74,93,79,0.08)'
+                      }}>
+                        {pkg.badge && (
+                          <span className="absolute top-3 right-3 px-2.5 py-0.5 rounded-full text-[10px] font-bold text-white" style={{ background: 'var(--green)' }}>{pkg.badge}</span>
+                        )}
+                        <p className="font-black text-base" style={{ color: 'var(--green-deeper)' }}>{pkg.name}</p>
+                        <p className="text-sm font-semibold" style={{ color: 'var(--green)' }}>{pkg.spots}</p>
+                        <p className="text-xs text-gray-400">{pkg.times}</p>
+                      </div>
                     ))}
                   </div>
                 </div>
               </motion.div>
-            </main>
 
-            {/* Footer */}
-            <footer className="bg-radio-dark text-white p-10 md:p-16">
-              <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-12">
-                <div className="space-y-6">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center overflow-hidden">
-                      <img src={iconKaew} alt="Kukaew" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                    </div>
-                    <h2 className="font-bold text-2xl">KUKAEW RADIO</h2>
-                  </div>
-                  <p className="text-white/60 leading-relaxed max-w-xs">
-                    นำเสนอเสียงเพลงแห่งจิตวิญญาณอีสานแท้ๆ ทั้งหมอลำ ลูกทุ่ง และบรรยากาศชุมชน
-                  </p>
-                </div>
-                <div className="space-y-6">
-                  <h3 className="font-bold text-lg border-b border-white/10 pb-2">ติดต่อเรา</h3>
-                  <ul className="space-y-4 text-white/70">
-                    <li className="flex items-center gap-3"><Phone size={18} className="text-radio-green" /><span>0819853404</span></li>
-                    <li className="flex items-center gap-3"><MapPin size={18} className="text-radio-green" /><span>อำเภอกู่แก้ว, จังหวัดอุดรธานี, ประเทศไทย</span></li>
-                    <li className="flex items-center gap-3"><User size={18} className="text-radio-green" /><span>จ่าเยี่ยม คนโก้</span></li>
-                  </ul>
-                </div>
-                <div className="space-y-6">
-                  <h3 className="font-bold text-lg border-b border-white/10 pb-2">ติดตามเรา</h3>
-                  <div className="flex gap-4">
-                    <a href="#" className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-radio-green transition-colors"><Facebook size={20} /></a>
-                    <a href={SHOPEE_URL} target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-radio-green transition-colors">
-                      <img
-                        src="https://cdn.simpleicons.org/shopee"
-                        alt="Shopee"
-                        className="w-5 h-5"
-                      />
-                    </a>
-                    <a href="#" className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-radio-green transition-colors"><Youtube size={20} /></a>
-                  </div>
-                </div>
-              </div>
-              <div className="max-w-7xl mx-auto mt-16 pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-white/40">
-                <p>© 2024 กู่แก้ววิทยุ FM 93.00 MHz. สงวนลิขสิทธิ์</p>
-                <div className="flex gap-8">
-                  <a href="#" className="hover:text-white transition-colors">นโยบายความเป็นส่วนตัว</a>
-                  <a href="#" className="hover:text-white transition-colors">ข้อกำหนดการใช้งาน</a>
-                </div>
-              </div>
-            </footer>
-          </motion.div>
-        )}
-
-        {/* CONTACT PAGE */}
-        {page === 'contact' && (
-          <motion.div
-            key="contact"
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -16 }}
-            transition={{ duration: 0.3 }}
-            className="flex-1 bg-gray-50 flex flex-col"
-          >
-            <div className="max-w-4xl mx-auto w-full px-4 md:px-6 pt-8">
-              <h1 className="text-2xl font-bold text-radio-dark">ติดต่อโฆษณา</h1>
-              <p className="text-gray-500 text-sm mt-1">สถานีวิทยุกู่แก้วเรดิโอ FM 93.00 MHz</p>
-            </div>
-
-            <div className="max-w-4xl mx-auto w-full px-4 md:px-6 py-10 md:py-14 space-y-8 flex-1">
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <motion.div
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 }}
-                  className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex flex-col items-center text-center gap-3 hover:shadow-md transition-shadow"
-                >
-                  <div className="w-14 h-14 bg-radio-green/10 rounded-2xl flex items-center justify-center">
-                    <User size={28} className="text-radio-green" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-400 font-semibold uppercase tracking-widest mb-1">ผู้จัดการสถานี</p>
-                    <p className="text-radio-dark font-bold text-lg">จ่าเยี่ยม คนโก้</p>
-                  </div>
-                </motion.div>
-
-                <motion.div
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.15 }}
-                  className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex flex-col items-center text-center gap-3 hover:shadow-md transition-shadow"
-                >
-                  <div className="w-14 h-14 bg-radio-green/10 rounded-2xl flex items-center justify-center">
-                    <Phone size={28} className="text-radio-green" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-400 font-semibold uppercase tracking-widest mb-1">เบอร์โทรศัพท์</p>
-                    <a href="tel:0819853404" className="inline-flex items-center gap-2 bg-radio-green text-white px-6 py-3 rounded-2xl font-bold hover:bg-opacity-90 transition-all shadow-md">
-                      081-985-3404
-                    </a>
-                  </div>
-                </motion.div>
-
-                <motion.div
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                  className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex flex-col items-center text-center gap-3 hover:shadow-md transition-shadow"
-                >
-                  <div className="w-14 h-14 bg-radio-green/10 rounded-2xl flex items-center justify-center">
-                    <MapPin size={28} className="text-radio-green" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-400 font-semibold uppercase tracking-widest mb-1">ที่ตั้งสถานี</p>
-                    <p className="text-radio-dark font-bold text-base leading-snug">
-                      อำเภอกู่แก้ว<br />จังหวัดอุดรธานี
-                    </p>
-                  </div>
-                </motion.div>
-              </div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.25 }}
-                className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden"
-              >
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between px-6 py-5 border-b border-gray-100 gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-radio-green/10 rounded-xl flex items-center justify-center">
-                      <Navigation size={20} className="text-radio-green" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-radio-dark text-lg">ตำแหน่งสถานี</h3>
-                      <p className="text-gray-400 text-sm">สถานีวิทยุกู่แก้วเรดิโอ · {LAT}, {LNG}</p>
-                    </div>
-                  </div>
-                  <a
-                    href={MAPS_LINK}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 bg-radio-green text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-opacity-90 transition-all shadow-md whitespace-nowrap"
-                  >
-                    <ExternalLink size={16} />
-                    เปิดแผนที่ Google Maps
-                  </a>
-                </div>
-
-                <div className="relative w-full h-72 md:h-96">
+              {/* Map */}
+              <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
+                className="rounded-[24px] overflow-hidden" style={{ border: '1px solid rgba(74,93,79,0.08)' }}>
+                <div className="h-[300px] md:h-[380px]">
                   <LeafletMap />
                 </div>
-
-                <div className="px-6 py-4 bg-gray-50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 text-gray-500 text-sm">
-                    <MapPin size={15} className="text-red-500 flex-shrink-0" />
-                    <span>FM 93.00 MHz · อำเภอกู่แก้ว จังหวัดอุดรธานี</span>
+                <div className="p-5 flex items-center justify-between" style={{ background: 'white' }}>
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'rgba(125,157,133,0.1)' }}>
+                      <MapPin size={16} style={{ color: 'var(--green)' }} />
+                    </div>
+                    <div>
+                      <p className="font-bold text-sm" style={{ color: 'var(--green-deeper)' }}>กู่แก้ววิทยุ FM 93.00</p>
+                      <p className="text-xs text-gray-400">อำเภอกู่แก้ว อุดรธานี</p>
+                    </div>
                   </div>
-                  <a
-                    href={`https://www.google.com/maps/dir/?api=1&destination=${LAT},${LNG}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-radio-green font-semibold text-sm hover:underline whitespace-nowrap flex items-center gap-1"
-                  >
+                  <a href={MAPS_LINK} target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all hover:opacity-80"
+                    style={{ background: 'var(--green)', color: 'white' }}>
                     <Navigation size={13} />
-                    นำทางมาที่นี่
+                    นำทาง
                   </a>
                 </div>
               </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="bg-radio-green/5 border border-radio-green/20 rounded-3xl p-6 md:p-8"
-              >
-                <div className="flex flex-col sm:flex-row items-start gap-5">
-                  <div className="w-12 h-12 bg-radio-green rounded-2xl flex items-center justify-center flex-shrink-0 shadow-md">
-                    <Megaphone size={24} className="text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-bold text-radio-dark text-xl mb-2">สนใจลงโฆษณากับเรา?</h3>
-                    <p className="text-gray-600 leading-relaxed mb-5">
-                      สถานีวิทยุกู่แก้วเรดิโอ FM 93.00 MHz ให้บริการโฆษณาทางวิทยุครอบคลุมพื้นที่อำเภอกู่แก้วและใกล้เคียง
-                      ติดต่อสอบถามอัตราค่าโฆษณาและแพ็กเกจพิเศษได้โดยตรง
-                    </p>
-                    <a
-                      href="tel:0819853404"
-                      className="inline-flex items-center gap-2 bg-radio-green text-white px-6 py-3 rounded-2xl font-bold hover:bg-opacity-90 transition-all shadow-md"
-                    >
-                      <Phone size={18} />
-                      โทร 081-985-3404
-                    </a>
-                  </div>
-                </div>
-              </motion.div>
-
             </div>
 
-            <footer className="bg-radio-dark text-white px-6 py-10 mt-4">
-              <div className="max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-white/40">
-                <p>© 2024 กู่แก้ววิทยุ FM 93.00 MHz. สงวนลิขสิทธิ์</p>
-                <div className="flex gap-8">
-                  <a href="#" className="hover:text-white transition-colors">นโยบายความเป็นส่วนตัว</a>
-                  <a href="#" className="hover:text-white transition-colors">ข้อกำหนดการใช้งาน</a>
+            {/* Footer same as home */}
+            <footer className="footer-dark text-white mt-8">
+              <div className="max-w-5xl mx-auto px-4 md:px-8 py-8">
+                <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full overflow-hidden ring-1 ring-white/10">
+                      <img src={iconKaew} alt="Kukaew" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                    </div>
+                    <span className="font-bold text-sm tracking-wide">KUKAEW RADIO FM 93.00</span>
+                  </div>
+                  <p className="text-xs text-white/30">© 2024 กู่แก้ววิทยุ. สงวนลิขสิทธิ์</p>
                 </div>
               </div>
             </footer>
@@ -682,129 +897,90 @@ export default function App() {
 
       </AnimatePresence>
 
-      {/* ─── MODALS ─── */}
-
+      {/* ─── SIM MODAL ─── */}
       <AnimatePresence>
         {showSimModal && !showUnlockFrame && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onClick={() => setShowSimModal(false)}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            />
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="bg-white rounded-[32px] p-8 max-w-sm w-full shadow-2xl relative z-10 text-center"
-            >
-              <div className="w-20 h-20 bg-blue-100 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Wifi size={40} />
+              className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+            <motion.div initial={{ scale: 0.92, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.92, opacity: 0, y: 20 }}
+              className="relative z-10 bg-white rounded-[28px] p-8 max-w-sm w-full shadow-2xl text-center">
+              <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-5" style={{ background: 'rgba(125,157,133,0.12)' }}>
+                <Wifi size={32} style={{ color: 'var(--green)' }} />
               </div>
-              <h3 className="text-2xl font-bold text-radio-dark mb-2">การเชื่อมต่อผิดพลาด</h3>
-              <p className="text-gray-500 mb-6 leading-relaxed">
-                หากมีปัญหาการรับสัญญาณวิทยุ<br />
-                กรุณาแตะปุ่มด้านล่างเพื่อ<br />
-                <span className="font-semibold text-radio-dark">เปิดรับสัญญาณ</span><br />
-                แล้วกลับมากด <span className="font-semibold text-radio-green">ลองใหม่</span>
+              <h3 className="text-xl font-black mb-2" style={{ color: 'var(--green-deeper)' }}>การเชื่อมต่อผิดพลาด</h3>
+              <p className="text-gray-500 text-sm mb-6 leading-relaxed">
+                หากมีปัญหาการรับสัญญาณวิทยุ กรุณากดปุ่มด้านล่างเพื่อเปิดรับสัญญาณ แล้วกลับมากด <strong style={{ color: 'var(--green)' }}>ลองใหม่</strong>
               </p>
-              <button
-                onClick={() => setShowUnlockFrame(true)}
-                className="block w-full bg-blue-500 text-white py-4 rounded-2xl font-bold mb-3 hover:bg-blue-600 transition-all shadow-lg"
-              >
-                เปิดรับสัญญาณ
-              </button>
-              <button
-                onClick={retryAfterUnlock}
-                className="w-full bg-radio-dark text-white py-4 rounded-2xl font-bold mb-3 hover:bg-opacity-90 transition-all shadow-lg"
-              >
-                ลองใหม่
-              </button>
-              <button
-                onClick={() => { setShowSimModal(false); setShowClosedModal(true); }}
-                className="w-full py-3 rounded-2xl font-medium text-gray-400 hover:text-gray-600 transition-all"
-              >
-                ไม่ใช่สัญญาณ → ดูสาเหตุอื่น
-              </button>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {showUnlockFrame && (
-          <div className="fixed inset-0 z-[200] flex flex-col">
-            <motion.div
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/80"
-            />
-            <motion.div
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="relative z-10 flex flex-col w-full h-full max-w-2xl mx-auto mt-10 rounded-t-[32px] overflow-hidden bg-white shadow-2xl"
-            >
-              <div className="flex items-center justify-between px-5 py-3 bg-gray-100 border-b border-gray-200 shrink-0">
-                <div className="flex items-center gap-2">
-                  <Wifi size={18} className="text-blue-500" />
-                  <span className="text-sm font-semibold text-gray-700">ปลดล็อกสัญญาณ</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-xs text-gray-400 truncate max-w-[140px] hidden sm:block">{UNLOCK_URL}</span>
-                  <button
-                    onClick={() => setShowUnlockFrame(false)}
-                    className="w-8 h-8 flex items-center justify-center bg-gray-200 hover:bg-gray-300 rounded-full text-gray-600 transition-all"
-                  >
-                    <X size={16} />
-                  </button>
-                </div>
-              </div>
-              <iframe src={UNLOCK_URL} className="flex-1 w-full border-none" title="Unlock SIM Stream" />
-              <div className="shrink-0 px-5 py-4 bg-white border-t border-gray-100 flex gap-3">
-                <button
-                  onClick={() => setShowUnlockFrame(false)}
-                  className="flex-1 py-3 rounded-2xl font-medium text-gray-500 bg-gray-100 hover:bg-gray-200 transition-all"
-                >
+              <div className="flex flex-col gap-3">
+                <button onClick={() => setShowUnlockFrame(true)}
+                  className="w-full py-3.5 rounded-2xl font-bold text-white transition-all hover:opacity-90"
+                  style={{ background: 'linear-gradient(135deg, var(--green), var(--green-dark))' }}>
+                  เปิดรับสัญญาณ
+                </button>
+                <button onClick={() => setShowSimModal(false)}
+                  className="w-full py-3.5 rounded-2xl font-semibold text-gray-500 bg-gray-100 hover:bg-gray-200 transition-all">
                   ยกเลิก
                 </button>
-                <button
-                  onClick={retryAfterUnlock}
-                  className="flex-1 py-3 rounded-2xl font-bold text-white bg-radio-green hover:bg-opacity-90 transition-all shadow-md"
-                >
-                  รับสัญญาณแล้ว ลองใหม่
-                </button>
               </div>
             </motion.div>
           </div>
         )}
       </AnimatePresence>
 
+      {/* ─── UNLOCK FRAME ─── */}
+      <AnimatePresence>
+        {showUnlockFrame && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[110] flex flex-col" style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)' }}>
+            <div className="flex items-center justify-between px-5 py-4 bg-white border-b border-gray-100">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: 'rgba(125,157,133,0.12)' }}>
+                  <Globe size={16} style={{ color: 'var(--green)' }} />
+                </div>
+                <span className="text-xs text-gray-400 truncate max-w-[140px] hidden sm:block">{UNLOCK_URL}</span>
+              </div>
+              <button onClick={() => setShowUnlockFrame(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 transition-all">
+                <X size={16} />
+              </button>
+            </div>
+            <iframe src={UNLOCK_URL} className="flex-1 w-full border-none bg-white" title="Unlock SIM Stream" />
+            <div className="px-5 py-4 bg-white border-t border-gray-100 flex gap-3">
+              <button onClick={() => setShowUnlockFrame(false)}
+                className="flex-1 py-3 rounded-2xl font-semibold text-gray-500 bg-gray-100 hover:bg-gray-200 transition-all">
+                ยกเลิก
+              </button>
+              <button onClick={retryAfterUnlock}
+                className="flex-1 py-3 rounded-2xl font-bold text-white transition-all hover:opacity-90"
+                style={{ background: 'linear-gradient(135deg, var(--green), var(--green-dark))' }}>
+                รับสัญญาณแล้ว ลองใหม่
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ─── CLOSED MODAL ─── */}
       <AnimatePresence>
         {showClosedModal && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onClick={() => setShowClosedModal(false)}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            />
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="bg-white rounded-[32px] p-8 max-w-sm w-full shadow-2xl relative z-10 text-center"
-            >
-              <div className="w-20 h-20 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                <RadioIcon size={40} />
+              className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+            <motion.div initial={{ scale: 0.92, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.92, opacity: 0, y: 20 }}
+              className="relative z-10 bg-white rounded-[28px] p-8 max-w-sm w-full shadow-2xl text-center">
+              <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-5" style={{ background: 'rgba(125,157,133,0.12)' }}>
+                <RadioIcon size={32} style={{ color: 'var(--green)' }} />
               </div>
-              <h3 className="text-2xl font-bold text-radio-dark mb-2">ขออภัยในความไม่สะดวก</h3>
-              <p className="text-gray-500 mb-8 leading-relaxed">
+              <h3 className="text-xl font-black mb-2" style={{ color: 'var(--green-deeper)' }}>ขออภัย</h3>
+              <p className="text-gray-500 text-sm mb-6 leading-relaxed">
                 ขณะนี้สถานีอยู่ในช่วงเวลาปิดสถานี<br />กรุณาติดตามรับฟังใหม่อีกครั้งในภายหลัง
               </p>
-              <button
-                onClick={() => setShowClosedModal(false)}
-                className="w-full bg-radio-dark text-white py-4 rounded-2xl font-bold hover:bg-opacity-90 transition-all shadow-lg"
-              >
+              <button onClick={() => setShowClosedModal(false)}
+                className="w-full py-3.5 rounded-2xl font-bold text-white transition-all hover:opacity-90"
+                style={{ background: 'linear-gradient(135deg, var(--green-dark), var(--green-deeper))' }}>
                 ตกลง
               </button>
             </motion.div>
@@ -812,29 +988,29 @@ export default function App() {
         )}
       </AnimatePresence>
 
+      {/* ─── COOKIE CONSENT ─── */}
       <AnimatePresence>
         {showCookieConsent && (
-          <motion.div
-            initial={{ y: 100, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 100, opacity: 0 }}
-            className="fixed bottom-6 left-6 right-6 md:left-auto md:right-8 md:max-w-md z-[110]"
-          >
-            <div className="bg-white rounded-3xl p-6 shadow-2xl border border-gray-100 flex flex-col gap-4">
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-radio-green/10 text-radio-green rounded-2xl flex items-center justify-center shrink-0">
-                  <Globe size={24} />
+          <motion.div initial={{ y: 100, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 100, opacity: 0 }}
+            className="fixed bottom-6 left-4 right-4 md:left-auto md:right-6 md:max-w-sm z-[110]">
+            <div className="bg-white rounded-[24px] p-6 shadow-2xl" style={{ border: '1px solid rgba(74,93,79,0.1)' }}>
+              <div className="flex items-start gap-4 mb-4">
+                <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(125,157,133,0.1)' }}>
+                  <Globe size={20} style={{ color: 'var(--green)' }} />
                 </div>
                 <div>
-                  <h4 className="font-bold text-radio-dark">การใช้คุกกี้ (Cookies)</h4>
-                  <p className="text-sm text-gray-500 leading-relaxed mt-1">
-                    เราใช้คุกกี้เพื่อเพิ่มประสิทธิภาพและประสบการณ์ที่ดีในการใช้งานเว็บไซต์
-                  </p>
+                  <h4 className="font-bold text-sm" style={{ color: 'var(--green-deeper)' }}>การใช้คุกกี้ (Cookies)</h4>
+                  <p className="text-xs text-gray-500 leading-relaxed mt-1">เราใช้คุกกี้เพื่อเพิ่มประสิทธิภาพและประสบการณ์ที่ดีในการใช้งาน</p>
                 </div>
               </div>
-              <div className="flex gap-3 mt-2">
-                <button onClick={handleAcceptCookies} className="flex-1 bg-radio-dark text-white py-3 rounded-xl font-bold text-sm hover:bg-opacity-90 transition-all">
+              <div className="flex gap-2">
+                <button onClick={handleAcceptCookies}
+                  className="flex-1 py-2.5 rounded-xl font-bold text-white text-sm transition-all hover:opacity-90"
+                  style={{ background: 'linear-gradient(135deg, var(--green-dark), var(--green-deeper))' }}>
                   ยอมรับทั้งหมด
                 </button>
-                <button onClick={() => setShowCookieConsent(false)} className="px-6 py-3 rounded-xl font-bold text-sm text-gray-500 hover:bg-gray-100 transition-all">
+                <button onClick={() => setShowCookieConsent(false)}
+                  className="px-4 py-2.5 rounded-xl font-semibold text-sm text-gray-500 bg-gray-100 hover:bg-gray-200 transition-all">
                   ตั้งค่า
                 </button>
               </div>
@@ -843,29 +1019,23 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* ─── FLOATING SHOPEE BASKET BUTTON ─── */}
-      <a
-        href={SHOPEE_URL}
-        target="_blank"
-        rel="noopener noreferrer"
+      {/* ─── FLOATING SHOPEE BUTTON ─── */}
+      <a href={SHOPEE_URL} target="_blank" rel="noopener noreferrer"
         className="fixed left-4 z-[90] group"
-        style={{ top: '38%', transform: 'translateY(-50%)' }}
-      >
+        style={{ top: '38%', transform: 'translateY(-50%)' }}>
         <motion.div
           initial={{ scale: 0, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: 'spring', damping: 15, stiffness: 200, delay: 0.8 }}
-          whileHover={{ scale: 1.12 }}
+          whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.93 }}
-          className="relative w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center shadow-2xl border-4 border-white"
-          style={{ filter: 'drop-shadow(0 4px 16px rgba(249,115,22,0.55))' }}
-        >
-          <ShoppingBasket size={28} className="text-white" />
-          {/* Pulse ring */}
-          <span className="absolute inset-0 rounded-full bg-orange-400 opacity-40 animate-ping" />
+          className="relative w-14 h-14 rounded-full flex items-center justify-center"
+          style={{ background: '#EE4D2D', boxShadow: '0 4px 20px rgba(238,77,45,0.45)', border: '3px solid white' }}>
+          <ShoppingBasket size={24} className="text-white" />
+          <span className="absolute inset-0 rounded-full bg-orange-400 opacity-30 animate-ping" />
         </motion.div>
-        {/* Tooltip */}
-        <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 bg-radio-dark text-white text-xs font-bold px-3 py-1.5 rounded-full whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity shadow-lg pointer-events-none">
+        <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 text-white text-xs font-bold px-3 py-1.5 rounded-full whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity shadow-lg pointer-events-none"
+          style={{ background: 'var(--green-deeper)' }}>
           🛍️ ร้านค้า Shopee
         </div>
       </a>
