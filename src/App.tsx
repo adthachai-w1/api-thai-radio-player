@@ -67,7 +67,7 @@ function LeafletMap() {
       });
       L.marker([LAT, LNG], { icon: customIcon })
         .addTo(map)
-        .bindPopup('<b style="color:#4A5D4F">กู่แก้ววิทยุ FM 93.00</b><br>อำเภอกู่แก้ว อุดรธานี')
+        .bindPopup('<b style="color:#2D5538">กู่แก้ววิทยุ FM 93.00</b><br>อำเภอกู่แก้ว อุดรธานี')
         .openPopup();
       mapInstanceRef.current = map;
     };
@@ -277,8 +277,8 @@ export default function App() {
 
         :root {
           --green: #7D9D85;
-          --green-dark: #4A5D4F;
-          --green-deeper: #2D3A31;
+          --green-dark: #5E8067;
+          --green-deeper: #3D6B4F;
           --green-glow: rgba(125,157,133,0.35);
           --bg: #F7F8F6;
           --surface: #FFFFFF;
@@ -389,7 +389,7 @@ export default function App() {
         }
 
         .footer-dark {
-          background: var(--green-deeper);
+          background: #4A7055;
         }
       `}</style>
 
@@ -413,7 +413,7 @@ export default function App() {
       />
 
       {/* ─── PREMIUM HEADER ─── */}
-      <header style={{ background: 'var(--green-deeper)', borderBottom: '1px solid rgba(255,255,255,0.08)' }} className="sticky top-0 z-50">
+      <header style={{ background: '#7D9D85', borderBottom: '1px solid rgba(255,255,255,0.15)' }} className="sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 md:px-8 h-16 flex items-center gap-6">
 
           {/* Logo */}
@@ -458,7 +458,7 @@ export default function App() {
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              style={{ borderTop: '1px solid rgba(255,255,255,0.08)', background: 'var(--green-deeper)' }}
+              style={{ borderTop: '1px solid rgba(255,255,255,0.15)', background: '#7D9D85' }}
               className="md:hidden overflow-hidden"
             >
               <div className="px-6 py-4 flex flex-col gap-1">
@@ -482,12 +482,12 @@ export default function App() {
           <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }} className="flex-1 flex flex-col">
 
             {/* HERO PLAYER — Dark forest stage */}
-            <section className="relative overflow-hidden noise-bg" style={{ background: 'linear-gradient(135deg, #1A2A1E 0%, #2D3A31 45%, #3A4D3E 100%)', minHeight: '520px' }}>
+            <section className="relative overflow-hidden noise-bg" style={{ background: 'linear-gradient(135deg, #6B9070 0%, #7D9D85 50%, #8FAF96 100%)', minHeight: '520px' }}>
 
               {/* Ambient radial glows */}
               <div className="absolute inset-0 pointer-events-none">
                 <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full opacity-20" style={{ background: 'radial-gradient(circle, #7D9D85 0%, transparent 70%)' }} />
-                <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full opacity-15" style={{ background: 'radial-gradient(circle, #4A5D4F 0%, transparent 70%)' }} />
+                <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full opacity-15" style={{ background: 'radial-gradient(circle, #a0c4a9 0%, transparent 70%)' }} />
               </div>
 
               <div className="relative z-10 max-w-5xl mx-auto px-4 md:px-8 py-12 md:py-16 flex flex-col md:flex-row items-center gap-10 md:gap-16">
@@ -555,7 +555,7 @@ export default function App() {
                     <button
                       onClick={togglePlay}
                       className={`play-glow relative w-16 h-16 rounded-full flex items-center justify-center transition-all duration-200 active:scale-95 ${isPlaying ? 'active' : ''}`}
-                      style={{ background: 'linear-gradient(135deg, #7D9D85 0%, #5A7A62 100%)', boxShadow: isPlaying ? '0 8px 32px rgba(125,157,133,0.5)' : '0 4px 16px rgba(0,0,0,0.3)' }}
+                      style={{ background: 'linear-gradient(135deg, #8FAF96 0%, #7D9D85 100%)', boxShadow: isPlaying ? '0 8px 32px rgba(125,157,133,0.5)' : '0 4px 16px rgba(0,0,0,0.3)' }}
                       aria-label={isPlaying ? 'หยุด' : 'เล่น'}
                     >
                       {isLoading ? (
@@ -618,7 +618,7 @@ export default function App() {
                   </div>
                   <div>
                     <p className="text-xs font-semibold tracking-widest uppercase" style={{ color: 'var(--green)' }}>ความถี่</p>
-                    <p className="font-black text-xl" style={{ color: 'var(--green-deeper)' }}>FM 93.00</p>
+                    <p className="font-black text-xl" style={{ color: '#2D5538' }}>FM 93.00</p>
                     <p className="text-xs text-gray-400">MHz · ออกอากาศ 24 ชม.</p>
                   </div>
                 </motion.div>
@@ -631,7 +631,7 @@ export default function App() {
                   </div>
                   <div>
                     <p className="text-xs font-semibold tracking-widest uppercase" style={{ color: 'var(--green)' }}>ผู้ฟัง</p>
-                    <p className="font-black text-xl" style={{ color: 'var(--green-deeper)' }}>1,254+</p>
+                    <p className="font-black text-xl" style={{ color: '#2D5538' }}>1,254+</p>
                     <p className="text-xs text-gray-400">ผู้ฟังออนไลน์ขณะนี้</p>
                   </div>
                 </motion.div>
@@ -644,7 +644,7 @@ export default function App() {
                   </div>
                   <div>
                     <p className="text-xs font-semibold tracking-widest uppercase" style={{ color: 'var(--green)' }}>สัญญาณ</p>
-                    <p className="font-black text-xl" style={{ color: 'var(--green-deeper)' }}>ยอดเยี่ยม</p>
+                    <p className="font-black text-xl" style={{ color: '#2D5538' }}>ยอดเยี่ยม</p>
                     <p className="text-xs text-gray-400">HD Quality · No Ads</p>
                   </div>
                 </motion.div>
@@ -657,15 +657,15 @@ export default function App() {
                 <div className="p-8 md:p-10 flex flex-col md:flex-row gap-8">
                   <div className="flex-1">
                     <p className="text-xs font-bold tracking-widest uppercase mb-3" style={{ color: 'var(--green)' }}>เกี่ยวกับเรา</p>
-                    <h3 className="text-2xl font-black mb-4" style={{ color: 'var(--green-deeper)' }}>เสียงแห่งจิตวิญญาณอีสาน</h3>
+                    <h3 className="text-2xl font-black mb-4" style={{ color: '#2D5538' }}>เสียงแห่งจิตวิญญาณอีสาน</h3>
                     <p className="text-gray-500 leading-relaxed text-sm">
                       กู่แก้ววิทยุ FM 93.00 MHz คือสถานีวิทยุชุมชนที่นำเสนอเพลงหมอลำ ลูกทุ่งอีสาน และข่าวสารท้องถิ่น ครอบคลุมพื้นที่อำเภอกู่แก้ว จังหวัดอุดรธานี และบริเวณใกล้เคียง พร้อมออกอากาศออนไลน์ให้ฟังได้ทั่วโลก
                     </p>
                     <div className="mt-6 flex flex-wrap gap-3">
-                      <span className="px-4 py-1.5 rounded-full text-xs font-semibold" style={{ background: 'rgba(125,157,133,0.1)', color: 'var(--green-dark)' }}>หมอลำ</span>
-                      <span className="px-4 py-1.5 rounded-full text-xs font-semibold" style={{ background: 'rgba(125,157,133,0.1)', color: 'var(--green-dark)' }}>ลูกทุ่ง</span>
-                      <span className="px-4 py-1.5 rounded-full text-xs font-semibold" style={{ background: 'rgba(125,157,133,0.1)', color: 'var(--green-dark)' }}>ข่าวชุมชน</span>
-                      <span className="px-4 py-1.5 rounded-full text-xs font-semibold" style={{ background: 'rgba(125,157,133,0.1)', color: 'var(--green-dark)' }}>ออนไลน์ 24/7</span>
+                      <span className="px-4 py-1.5 rounded-full text-xs font-semibold" style={{ background: 'rgba(125,157,133,0.1)', color: '#5E8067' }}>หมอลำ</span>
+                      <span className="px-4 py-1.5 rounded-full text-xs font-semibold" style={{ background: 'rgba(125,157,133,0.1)', color: '#5E8067' }}>ลูกทุ่ง</span>
+                      <span className="px-4 py-1.5 rounded-full text-xs font-semibold" style={{ background: 'rgba(125,157,133,0.1)', color: '#5E8067' }}>ข่าวชุมชน</span>
+                      <span className="px-4 py-1.5 rounded-full text-xs font-semibold" style={{ background: 'rgba(125,157,133,0.1)', color: '#5E8067' }}>ออนไลน์ 24/7</span>
                     </div>
                   </div>
                   <div className="flex-shrink-0 flex flex-col gap-4 min-w-[180px]">
@@ -742,7 +742,7 @@ export default function App() {
                   </div>
                   <button onClick={() => navigateTo('contact')}
                     className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-semibold text-sm transition-all hover:opacity-90"
-                    style={{ background: 'var(--green)', color: 'white' }}>
+                    style={{ background: '#7D9D85', color: 'white' }}>
                     <Megaphone size={15} />
                     ลงโฆษณา
                   </button>
@@ -769,7 +769,7 @@ export default function App() {
 
             {/* Page Hero */}
             <div className="noise-bg relative overflow-hidden py-14 px-4 md:px-8"
-              style={{ background: 'linear-gradient(135deg, #1A2A1E 0%, #2D3A31 100%)' }}>
+              style={{ background: 'linear-gradient(135deg, #6B9070 0%, #7D9D85 100%)' }}>
               <div className="absolute inset-0 pointer-events-none">
                 <div className="absolute top-0 right-0 w-[40%] h-full opacity-10" style={{ background: 'radial-gradient(circle at 80% 50%, #7D9D85 0%, transparent 70%)' }} />
               </div>
@@ -791,7 +791,7 @@ export default function App() {
                   </div>
                   <div>
                     <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color: 'var(--green)' }}>ผู้จัดการสถานี</p>
-                    <p className="font-bold text-lg" style={{ color: 'var(--green-deeper)' }}>จ่าเยี่ยม คนโก้</p>
+                    <p className="font-bold text-lg" style={{ color: '#2D5538' }}>จ่าเยี่ยม คนโก้</p>
                   </div>
                 </motion.div>
 
@@ -801,7 +801,7 @@ export default function App() {
                   </div>
                   <div>
                     <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color: 'var(--green)' }}>โทรศัพท์</p>
-                    <a href="tel:0819853404" className="font-bold text-lg hover:underline" style={{ color: 'var(--green-deeper)' }}>081-985-3404</a>
+                    <a href="tel:0819853404" className="font-bold text-lg hover:underline" style={{ color: '#2D5538' }}>081-985-3404</a>
                   </div>
                 </motion.div>
 
@@ -811,46 +811,11 @@ export default function App() {
                   </div>
                   <div>
                     <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color: 'var(--green)' }}>ที่ตั้ง</p>
-                    <p className="font-bold text-base" style={{ color: 'var(--green-deeper)' }}>อำเภอกู่แก้ว</p>
+                    <p className="font-bold text-base" style={{ color: '#2D5538' }}>อำเภอกู่แก้ว</p>
                     <p className="text-gray-400 text-sm">จังหวัดอุดรธานี</p>
                   </div>
                 </motion.div>
               </div>
-
-              {/* Ad rates */}
-              <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-                className="rounded-[24px] overflow-hidden" style={{ background: 'white', border: '1px solid rgba(74,93,79,0.08)' }}>
-                <div className="p-8 md:p-10">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ background: 'rgba(125,157,133,0.12)' }}>
-                      <Megaphone size={20} style={{ color: 'var(--green)' }} />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-lg" style={{ color: 'var(--green-deeper)' }}>แพ็กเกจโฆษณา</h3>
-                      <p className="text-gray-400 text-sm">เลือกแพ็กเกจที่เหมาะกับธุรกิจของคุณ</p>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    {[
-                      { name: 'Basic', spots: '30 วินาที', times: '3 ครั้ง / วัน', badge: null },
-                      { name: 'Standard', spots: '60 วินาที', times: '5 ครั้ง / วัน', badge: 'แนะนำ' },
-                      { name: 'Premium', spots: '90 วินาที', times: '10 ครั้ง / วัน', badge: null },
-                    ].map((pkg, i) => (
-                      <div key={i} className="relative p-5 rounded-2xl flex flex-col gap-2" style={{
-                        background: pkg.badge ? 'linear-gradient(135deg, rgba(125,157,133,0.12), rgba(74,93,79,0.06))' : 'var(--bg)',
-                        border: pkg.badge ? '1.5px solid rgba(125,157,133,0.3)' : '1.5px solid rgba(74,93,79,0.08)'
-                      }}>
-                        {pkg.badge && (
-                          <span className="absolute top-3 right-3 px-2.5 py-0.5 rounded-full text-[10px] font-bold text-white" style={{ background: 'var(--green)' }}>{pkg.badge}</span>
-                        )}
-                        <p className="font-black text-base" style={{ color: 'var(--green-deeper)' }}>{pkg.name}</p>
-                        <p className="text-sm font-semibold" style={{ color: 'var(--green)' }}>{pkg.spots}</p>
-                        <p className="text-xs text-gray-400">{pkg.times}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </motion.div>
 
               {/* Map */}
               <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
@@ -864,13 +829,13 @@ export default function App() {
                       <MapPin size={16} style={{ color: 'var(--green)' }} />
                     </div>
                     <div>
-                      <p className="font-bold text-sm" style={{ color: 'var(--green-deeper)' }}>กู่แก้ววิทยุ FM 93.00</p>
+                      <p className="font-bold text-sm" style={{ color: '#2D5538' }}>กู่แก้ววิทยุ FM 93.00</p>
                       <p className="text-xs text-gray-400">อำเภอกู่แก้ว อุดรธานี</p>
                     </div>
                   </div>
                   <a href={MAPS_LINK} target="_blank" rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all hover:opacity-80"
-                    style={{ background: 'var(--green)', color: 'white' }}>
+                    style={{ background: '#7D9D85', color: 'white' }}>
                     <Navigation size={13} />
                     นำทาง
                   </a>
@@ -909,14 +874,14 @@ export default function App() {
               <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-5" style={{ background: 'rgba(125,157,133,0.12)' }}>
                 <Wifi size={32} style={{ color: 'var(--green)' }} />
               </div>
-              <h3 className="text-xl font-black mb-2" style={{ color: 'var(--green-deeper)' }}>การเชื่อมต่อผิดพลาด</h3>
+              <h3 className="text-xl font-black mb-2" style={{ color: '#2D5538' }}>การเชื่อมต่อผิดพลาด</h3>
               <p className="text-gray-500 text-sm mb-6 leading-relaxed">
                 หากมีปัญหาการรับสัญญาณวิทยุ กรุณากดปุ่มด้านล่างเพื่อเปิดรับสัญญาณ แล้วกลับมากด <strong style={{ color: 'var(--green)' }}>ลองใหม่</strong>
               </p>
               <div className="flex flex-col gap-3">
                 <button onClick={() => setShowUnlockFrame(true)}
                   className="w-full py-3.5 rounded-2xl font-bold text-white transition-all hover:opacity-90"
-                  style={{ background: 'linear-gradient(135deg, var(--green), var(--green-dark))' }}>
+                  style={{ background: 'linear-gradient(135deg, #8FAF96, #7D9D85)' }}>
                   เปิดรับสัญญาณ
                 </button>
                 <button onClick={() => setShowSimModal(false)}
@@ -954,7 +919,7 @@ export default function App() {
               </button>
               <button onClick={retryAfterUnlock}
                 className="flex-1 py-3 rounded-2xl font-bold text-white transition-all hover:opacity-90"
-                style={{ background: 'linear-gradient(135deg, var(--green), var(--green-dark))' }}>
+                style={{ background: 'linear-gradient(135deg, #8FAF96, #7D9D85)' }}>
                 รับสัญญาณแล้ว ลองใหม่
               </button>
             </div>
@@ -974,13 +939,13 @@ export default function App() {
               <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-5" style={{ background: 'rgba(125,157,133,0.12)' }}>
                 <RadioIcon size={32} style={{ color: 'var(--green)' }} />
               </div>
-              <h3 className="text-xl font-black mb-2" style={{ color: 'var(--green-deeper)' }}>ขออภัย</h3>
+              <h3 className="text-xl font-black mb-2" style={{ color: '#2D5538' }}>ขออภัย</h3>
               <p className="text-gray-500 text-sm mb-6 leading-relaxed">
                 ขณะนี้สถานีอยู่ในช่วงเวลาปิดสถานี<br />กรุณาติดตามรับฟังใหม่อีกครั้งในภายหลัง
               </p>
               <button onClick={() => setShowClosedModal(false)}
                 className="w-full py-3.5 rounded-2xl font-bold text-white transition-all hover:opacity-90"
-                style={{ background: 'linear-gradient(135deg, var(--green-dark), var(--green-deeper))' }}>
+                style={{ background: 'linear-gradient(135deg, #7D9D85, #5E8067)' }}>
                 ตกลง
               </button>
             </motion.div>
@@ -999,14 +964,14 @@ export default function App() {
                   <Globe size={20} style={{ color: 'var(--green)' }} />
                 </div>
                 <div>
-                  <h4 className="font-bold text-sm" style={{ color: 'var(--green-deeper)' }}>การใช้คุกกี้ (Cookies)</h4>
+                  <h4 className="font-bold text-sm" style={{ color: '#2D5538' }}>การใช้คุกกี้ (Cookies)</h4>
                   <p className="text-xs text-gray-500 leading-relaxed mt-1">เราใช้คุกกี้เพื่อเพิ่มประสิทธิภาพและประสบการณ์ที่ดีในการใช้งาน</p>
                 </div>
               </div>
               <div className="flex gap-2">
                 <button onClick={handleAcceptCookies}
                   className="flex-1 py-2.5 rounded-xl font-bold text-white text-sm transition-all hover:opacity-90"
-                  style={{ background: 'linear-gradient(135deg, var(--green-dark), var(--green-deeper))' }}>
+                  style={{ background: 'linear-gradient(135deg, #7D9D85, #5E8067)' }}>
                   ยอมรับทั้งหมด
                 </button>
                 <button onClick={() => setShowCookieConsent(false)}
@@ -1035,7 +1000,7 @@ export default function App() {
           <span className="absolute inset-0 rounded-full bg-orange-400 opacity-30 animate-ping" />
         </motion.div>
         <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 text-white text-xs font-bold px-3 py-1.5 rounded-full whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity shadow-lg pointer-events-none"
-          style={{ background: 'var(--green-deeper)' }}>
+          style={{ background: '#4A7055' }}>
           🛍️ ร้านค้า Shopee
         </div>
       </a>
