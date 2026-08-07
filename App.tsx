@@ -34,6 +34,87 @@ import iconKaew from "./images/icon-kaew.png";
 import { motion, AnimatePresence } from 'motion/react';
 import COVER_IMAGE_URL from "./images/photo-1.png";
 
+// ─── CCTV Camera Data ────────────────────────────────────────────────────────
+const CCTV_CAMERAS = [
+  { name: 'วงเวียนกรมหลวงประจักษ์ศิลปาคม SPD', lat: 17.4138, lng: 102.7872 },
+  { name: 'แยกสุครัทรา ด้านถนนสุครัทรา', lat: 17.4101, lng: 102.7856 },
+  { name: 'แยกอาชีวศึกษา ด้านถนนประชารักษา', lat: 17.4155, lng: 102.7903 },
+  { name: 'แยกอาชีวศึกษา ด้านถนนเพาะนิยม', lat: 17.4160, lng: 102.7895 },
+  { name: 'แยกเรือนจำ ถนนหมากแข้ง', lat: 17.4080, lng: 102.7820 },
+  { name: 'แยกจุดกลับรถหน้าตลาดเมืองทองขาออก', lat: 17.4200, lng: 102.7930 },
+  { name: 'แยกตลาดไทยอีสานแยกถนนสุสการ', lat: 17.4175, lng: 102.7845 },
+  { name: 'แยกปากซอยประชาสันติ', lat: 17.4090, lng: 102.7865 },
+  { name: 'แยกหน้าโรงเรียนอุดรคริสเตียน', lat: 17.4120, lng: 102.7880 },
+  { name: 'แยกหน้าโรงเรียนอุดรพิทยานุกูล ถนนโพศรี', lat: 17.4145, lng: 102.7920 },
+  { name: 'แยกชลประทาน', lat: 17.4060, lng: 102.7840 },
+  { name: 'แยกริเบต', lat: 17.4185, lng: 102.7860 },
+  { name: 'แยกหน้าสถานีรถไฟ', lat: 17.4035, lng: 102.7870 },
+  { name: 'แยกโพธิ์ศรี ด้านถนนโพธิ์ศรี', lat: 17.4130, lng: 102.7910 },
+  { name: 'แยกโพธิ์ศรี ด้านถนนอธิบดี', lat: 17.4125, lng: 102.7905 },
+  { name: 'แยกหน้าโรงพยาบาลอุดรธานี', lat: 17.4050, lng: 102.7890 },
+  { name: 'แยกหน้าศาลากลางจังหวัด', lat: 17.4170, lng: 102.7940 },
+  { name: 'แยกถนนทหาร-ถนนอุดรดุษฎี', lat: 17.4110, lng: 102.7830 },
+];
+
+// ─── Traffic Map Component ────────────────────────────────────────────────────
+function TrafficMap() {
+  const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (mapInstanceRef.current || !mapRef.current) return;
+
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+    document.head.appendChild(link);
+
+    const script = document.createElement('script');
+    script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    script.onload = () => {
+      const L = (window as any).L;
+      const map = L.map(mapRef.current, { zoomControl: true, scrollWheelZoom: false })
+        .setView([17.4138, 102.7872], 14);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors', maxZoom: 19,
+      }).addTo(map);
+
+      const camIcon = L.divIcon({
+        html: `<div style="width:30px;height:30px;background:#22c55e;border:2.5px solid white;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 12px rgba(34,197,94,0.5)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+          </svg>
+        </div>`,
+        className: '', iconSize: [30, 30], iconAnchor: [15, 15],
+      });
+
+      CCTV_CAMERAS.forEach(cam => {
+        L.marker([cam.lat, cam.lng], { icon: camIcon })
+          .addTo(map)
+          .bindPopup(`<div style="font-family:Sarabun,sans-serif;min-width:180px">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+              <span style="width:8px;height:8px;background:#22c55e;border-radius:50%;display:inline-block;flex-shrink:0"></span>
+              <b style="font-size:12px;color:#1C261C">${cam.name}</b>
+            </div>
+            <a href="https://www.udoncity.go.th/frontend/web/cctv/map" target="_blank"
+              style="font-size:11px;color:#7D9D85;text-decoration:none;display:flex;align-items:center;gap:3px;margin-top:4px">
+              ดูกล้อง CCTV สด →
+            </a>
+          </div>`);
+      });
+
+      mapInstanceRef.current = map;
+    };
+    document.head.appendChild(script);
+
+    return () => {
+      if (mapInstanceRef.current) { mapInstanceRef.current.remove(); mapInstanceRef.current = null; }
+    };
+  }, []);
+
+  return <div ref={mapRef} className="w-full h-full" style={{ minHeight: '480px' }} />;
+}
+
 // ─── Leaflet Map Component ───────────────────────────────────────────────────
 function LeafletMap() {
   const mapRef = useRef<HTMLDivElement>(null);
@@ -861,7 +942,7 @@ export default function App() {
             className="flex-1 flex flex-col" style={{ background: 'var(--color-bg)' }}>
 
             {/* Page Hero */}
-            <div className="has-noise relative overflow-hidden py-12 px-4 md:px-8"
+            <div className="has-noise relative overflow-hidden py-10 px-4 md:px-8"
               style={{ background: 'linear-gradient(150deg, var(--color-hero-from) 0%, var(--color-green-500) 100%)' }}>
               <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
                 <div className="absolute top-0 right-0 w-[45%] h-full"
@@ -869,60 +950,62 @@ export default function App() {
               </div>
               <div className="relative z-10 max-w-5xl mx-auto">
                 <p className="section-label text-white/60">CCTV · เทศบาลนครอุดรธานี</p>
-                <h1 className="text-3xl md:text-4xl font-black text-white mb-1.5 leading-tight">ดูการจราจรสด</h1>
-                <p className="text-white/50 text-[13px] tracking-wide">ข้อมูลกล้อง CCTV แบบ Real-time · อุดรธานี</p>
+                <h1 className="text-3xl md:text-4xl font-black text-white mb-1 leading-tight">ดูการจราจรสด</h1>
+                <p className="text-white/50 text-[13px]">กล้อง CCTV จุดสำคัญในอุดรธานี</p>
               </div>
             </div>
 
-            {/* Traffic redirect UI */}
-            <div className="flex-1 flex flex-col items-center justify-center px-4 md:px-8 py-12 max-w-5xl mx-auto w-full">
-              <div className="w-full max-w-md text-center"
-                style={{ background: 'var(--color-surface)', borderRadius: 'var(--radius-xl)', border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-card)', padding: '48px 36px' }}>
+            {/* Map + Camera List */}
+            <div className="flex-1 flex flex-col lg:flex-row gap-0 max-w-7xl mx-auto w-full px-4 md:px-6 py-6 gap-4">
 
-                {/* Icon */}
-                <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"
-                  style={{ background: 'var(--color-green-100)' }}>
-                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--color-brand)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="3"/>
-                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/>
+              {/* Map */}
+              <div className="flex-1 overflow-hidden"
+                style={{ borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-card)', minHeight: '480px' }}>
+                <TrafficMap />
+              </div>
+
+              {/* Camera List */}
+              <div className="lg:w-72 xl:w-80 overflow-hidden flex flex-col"
+                style={{ borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-card)', background: 'var(--color-surface)' }}>
+                <div className="px-4 py-3.5 flex items-center gap-2.5" style={{ borderBottom: '1px solid var(--color-border)' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-brand)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2" y="2" width="20" height="20" rx="2"/><circle cx="12" cy="10" r="3"/><path d="M7 20v-1a5 5 0 0 1 10 0v1"/>
                   </svg>
+                  <span className="font-bold text-[13px]" style={{ color: 'var(--color-text-primary)' }}>รายชื่อกล้อง</span>
+                  <span className="ml-auto text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: 'var(--color-green-100)', color: 'var(--color-brand)' }}>
+                    {CCTV_CAMERAS.length} จุด
+                  </span>
                 </div>
-
-                {/* Text */}
-                <h2 className="text-xl font-black mb-2" style={{ color: 'var(--color-text-primary)' }}>
-                  กล้อง CCTV จราจรอุดรธานี
-                </h2>
-                <p className="text-[13.5px] leading-relaxed mb-2" style={{ color: 'var(--color-text-secondary)' }}>
-                  ระบบ CCTV ของเทศบาลนครอุดรธานีไม่อนุญาตให้แสดงผลในเว็บอื่น
-                </p>
-                <p className="text-[13px] mb-8" style={{ color: 'var(--color-text-secondary)' }}>
-                  กดปุ่มด้านล่างเพื่อเปิดดูในแท็บใหม่ได้เลยครับ
-                </p>
-
-                {/* CTA button */}
-                <a href="https://www.udoncity.go.th/frontend/web/cctv/map"
-                  target="_blank" rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2.5 font-bold text-[14px] text-white transition-all hover:opacity-90 active:scale-95"
-                  style={{ background: 'var(--color-brand)', padding: '14px 28px', borderRadius: 'var(--radius-full)', boxShadow: '0 4px 16px rgba(125,157,133,0.4)' }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="3"/><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/>
-                  </svg>
-                  เปิดดู CCTV จราจร
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15,3 21,3 21,9"/><line x1="10" y1="14" x2="21" y2="3"/>
-                  </svg>
-                </a>
-
-                {/* Source credit */}
-                <p className="mt-6 text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>
-                  ข้อมูลจาก · เทศบาลนครอุดรธานี
-                </p>
+                <div className="overflow-y-auto flex-1" style={{ maxHeight: '480px' }}>
+                  {CCTV_CAMERAS.map((cam, i) => (
+                    <a key={i} href="https://www.udoncity.go.th/frontend/web/cctv/map"
+                      target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-[var(--color-green-100)] group"
+                      style={{ borderBottom: '1px solid var(--color-border)' }}>
+                      <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: '#22c55e' }} />
+                      <span className="text-[12.5px] leading-snug flex-1" style={{ color: 'var(--color-text-primary)' }}>{cam.name}</span>
+                      <svg className="opacity-0 group-hover:opacity-40 flex-shrink-0 transition-opacity" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15,3 21,3 21,9"/><line x1="10" y1="14" x2="21" y2="3"/>
+                      </svg>
+                    </a>
+                  ))}
+                </div>
+                <div className="px-4 py-3" style={{ borderTop: '1px solid var(--color-border)' }}>
+                  <a href="https://www.udoncity.go.th/frontend/web/cctv/map" target="_blank" rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl font-bold text-[12px] text-white transition-all hover:opacity-90"
+                    style={{ background: 'var(--color-brand)' }}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15,3 21,3 21,9"/><line x1="10" y1="14" x2="21" y2="3"/>
+                    </svg>
+                    เปิดดูกล้อง CCTV สด
+                  </a>
+                </div>
               </div>
             </div>
 
             {/* Footer compact */}
-            <footer className="site-footer text-white mt-4">
-              <div className="max-w-5xl mx-auto px-4 md:px-8 py-7 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <footer className="site-footer text-white mt-2">
+              <div className="max-w-5xl mx-auto px-4 md:px-8 py-6 flex flex-col sm:flex-row justify-between items-center gap-4">
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-full overflow-hidden ring-1 ring-white/15">
                     <img src={iconKaew} alt="" className="w-full h-full object-cover"
