@@ -69,6 +69,31 @@ const UDON_CAMERAS = [
   { name: 'แยกหน้าโรงเรียนอุดรพิทยานุกูล ถนนโพศรี',      stream: 'https://streaming.udoncity.go.th:1935/live/Axis_IP727.stream/chunklist_w1204838826.m3u8' },
   { name: 'แยก VT แหนมเนือง',                             stream: 'https://streaming.udoncity.go.th:1935/live/Bosch_IP2.9.stream/chunklist_w1021328968.m3u8' },
   { name: 'แยกต้อยลาบเป็ด',                               stream: 'https://streaming.udoncity.go.th:1935/live/Bosch_IP2.17.stream/chunklist_w941487597.m3u8' },
+  { name: 'คีตกวี',                                        stream: 'https://streaming.udoncity.go.th:1935/live/cctv_t2057.stream/chunklist_w83386022.m3u8' },
+  { name: 'ถ.ทหาร โซนไฮเทค Fix Out 2',                    stream: 'https://streaming.udoncity.go.th:1935/live/cctv_t191146.stream/chunklist_w445222903.m3u8' },
+  { name: 'ถนนเพาะนิยม (อนุบาลลูกรัก)',                   stream: 'https://streaming.udoncity.go.th:1935/live/Bosch_IP2.2.stream/chunklist_w1940793781.m3u8' },
+  { name: 'ทางเข้า บน.23 ช่องทาง 1',                      stream: 'https://streaming.udoncity.go.th:1935/live/cctv_t191150.stream/chunklist_w446523153.m3u8' },
+  { name: 'ทางเข้า บน.23 ช่องทาง 2',                      stream: 'https://streaming.udoncity.go.th:1935/live/cctv_t191149.stream/chunklist_w1671565536.m3u8' },
+  { name: 'ทางเข้า มทบ.24 ประตู1',                        stream: 'https://streaming.udoncity.go.th:1935/live/cctv_t191151.stream/chunklist_w1502789813.m3u8' },
+  { name: 'ทางเข้า มทบ.24 ประตู2 Fix 1',                  stream: 'https://streaming.udoncity.go.th:1935/live/cctv_t191152.stream/chunklist_w936391579.m3u8' },
+  { name: 'ทางเข้า มทบ.24 ประตู2 Fix 2',                  stream: 'https://streaming.udoncity.go.th:1935/live/cctv_t191153.stream/chunklist_w1073622667.m3u8' },
+  { name: 'แยกจุดกลับรถหน้าตลาดเมืองทองขาออก',            stream: 'https://streaming.udoncity.go.th:1935/live/Axis_12_30.stream/chunklist_w467067745.m3u8' },
+  { name: 'แยกชลประทาน',                                  stream: 'https://streaming.udoncity.go.th:1935/live/Axis_12_45.stream/chunklist_w787893003.m3u8' },
+  { name: 'แยกซอยจินตคาม',                                stream: 'https://streaming.udoncity.go.th:1935/live/cctv_a740.stream/chunklist_w1117916930.m3u8' },
+  { name: 'แยกตลาดไทยอีสานแยกถนนสุระการ',                 stream: 'https://streaming.udoncity.go.th:1935/live/Axis_12_21.stream/chunklist_w899598949.m3u8' },
+  { name: 'แยกธิเบต',                                     stream: 'https://streaming.udoncity.go.th:1935/live/Axis_12_43.stream/chunklist_w772505927.m3u8' },
+  { name: 'แยกปากซอยประชาสันติ',                          stream: 'https://streaming.udoncity.go.th:1935/live/Axis_12_27.stream/chunklist_w955945115.m3u8' },
+  { name: 'แยกพรมประกาย',                                  stream: 'https://streaming.udoncity.go.th:1935/live/cctv_b214.stream/chunklist_w758761702.m3u8' },
+  { name: 'แยก รร.หมากแข้ง',                              stream: 'https://streaming.udoncity.go.th:1935/live/cctv_t192101.stream/chunklist_w384052941.m3u8' },
+  { name: 'แยกร่วมทวี ถนนนิตโย',                          stream: 'https://streaming.udoncity.go.th:1935/live/Axis_12_22.stream/chunklist_w236554495.m3u8' },
+  { name: 'แยกเรือนจำ ถนนหมากแข้ง',                       stream: 'https://streaming.udoncity.go.th:1935/live/Axis_IP729.stream/chunklist_w1495648512.m3u8' },
+  { name: 'แยกศรีวิไล',                                   stream: 'https://streaming.udoncity.go.th:1935/live/cctv_d747.stream/chunklist_w1347288485.m3u8' },
+  { name: 'แยกสี่ศรัทธา ด้านถนนสี่ศรัทธา',               stream: 'https://streaming.udoncity.go.th:1935/live/Axis_IP754.stream/chunklist_w168520904.m3u8' },
+  { name: 'แยกหน้าโรงเรียนอุดรคริสเตียน',                 stream: 'https://streaming.udoncity.go.th:1935/live/Axis_12_53.stream/chunklist_w686882157.m3u8' },
+  { name: 'แยกหลังโรงเรียนบ้านหมากแข้ง',                  stream: 'https://streaming.udoncity.go.th:1935/live/Bosch_IP2.20.stream/chunklist_w1256541189.m3u8' },
+  { name: 'รพ.ค่าย ขาออก',                                stream: 'https://streaming.udoncity.go.th:1935/live/cctv_t2095.stream/chunklist_w1841236309.m3u8' },
+  { name: 'สี่แยกบ้านจั่น Fix 1',                         stream: 'https://streaming.udoncity.go.th:1935/live/cctv_t191141.stream/chunklist_w1249490698.m3u8' },
+  { name: 'สี่แยกบ้านจั่น Fix 2',                         stream: 'https://streaming.udoncity.go.th:1935/live/cctv_t191142.stream/chunklist_w1130762443.m3u8' },
 ];
 
 // ─── HLS Player ───────────────────────────────────────────────────────────────
@@ -115,25 +140,21 @@ function HLSPlayer({ src, camName }: { src: string; camName: string }) {
   }, [src]);
 
   return (
-    <div className="relative w-full h-full" style={{ background: '#111', minHeight: '460px', borderRadius: 'var(--radius-lg)' }}>
+    <div className="relative w-full" style={{ background: '#111', borderRadius: '12px', aspectRatio: '16/9' }}>
       <video ref={videoRef} muted autoPlay playsInline className="w-full h-full"
-        style={{ display: status === 'playing' ? 'block' : 'none', borderRadius: 'var(--radius-lg)', objectFit: 'cover', minHeight: '460px' }} />
+        style={{ display: status === 'playing' ? 'block' : 'none', borderRadius: '12px', objectFit: 'cover', position: 'absolute', inset: 0 }} />
       {status === 'loading' && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-          <div className="w-10 h-10 rounded-full border-[3px] border-white/10 border-t-white animate-spin" />
-          <p className="text-white/50 text-[12px] font-medium">{camName}</p>
-          <p className="text-white/30 text-[11px]">กำลังเชื่อมต่อสัญญาณ...</p>
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3" style={{ borderRadius: '12px' }}>
+          <div className="w-9 h-9 rounded-full border-[3px] border-white/10 border-t-white animate-spin" />
+          <p className="text-white/40 text-[11px]">กำลังเชื่อมต่อ...</p>
         </div>
       )}
       {status === 'error' && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-          <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: 'rgba(220,38,38,0.15)' }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f87171" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-            </svg>
-          </div>
-          <p className="text-white/60 text-[13px] font-semibold">{camName}</p>
-          <p className="text-white/30 text-[11px]">กล้องออฟไลน์หรือสัญญาณขัดข้อง</p>
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2" style={{ borderRadius: '12px' }}>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#f87171" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <p className="text-white/40 text-[11px]">กล้องออฟไลน์</p>
         </div>
       )}
     </div>
@@ -145,48 +166,68 @@ function TrafficViewer() {
   const [selected, setSelected] = useState(UDON_CAMERAS[0]);
 
   return (
-    <div className="flex-1 flex flex-col gap-4 px-4 md:px-6 py-5 max-w-5xl mx-auto w-full">
+    <div className="flex-1 px-3 md:px-6 py-4 max-w-2xl mx-auto w-full">
 
-      {/* Dropdown bar */}
-      <div className="flex items-center gap-3"
-        style={{ background: 'var(--color-surface)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-card)', padding: '10px 16px' }}>
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--color-brand)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
-          <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
-          <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
-        </svg>
-        <span className="font-bold text-[13px] flex-shrink-0" style={{ color: 'var(--color-text-primary)' }}>List View</span>
-        <div className="flex-1 relative">
-          <select
-            value={selected.stream}
-            onChange={e => {
-              const cam = UDON_CAMERAS.find(c => c.stream === e.target.value);
-              if (cam) setSelected(cam);
-            }}
-            className="w-full appearance-none font-medium text-[13px] pl-3 pr-8 py-1.5 rounded-lg cursor-pointer"
-            style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)', outline: 'none' }}
-          >
-            {UDON_CAMERAS.map((cam, i) => (
-              <option key={i} value={cam.stream}>{cam.name}</option>
-            ))}
-          </select>
-          <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-secondary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="6,9 12,15 18,9"/>
-            </svg>
+      {/* Card — เหมือน UI ในภาพ */}
+      <div style={{
+        background: 'var(--color-surface)',
+        border: '1px solid var(--color-border)',
+        borderRadius: '20px',
+        boxShadow: 'var(--shadow-card)',
+        overflow: 'hidden',
+      }}>
+
+        {/* Header */}
+        <div className="flex items-center gap-2 px-4 py-3" style={{ borderBottom: '1px solid var(--color-border)' }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-brand)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+            <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+          </svg>
+          <span className="font-bold text-[13px]" style={{ color: 'var(--color-text-primary)' }}>List View</span>
+        </div>
+
+        {/* Dropdown */}
+        <div className="px-4 py-3" style={{ borderBottom: '1px solid var(--color-border)' }}>
+          <div className="relative">
+            <select
+              value={selected.stream}
+              onChange={e => {
+                const cam = UDON_CAMERAS.find(c => c.stream === e.target.value);
+                if (cam) setSelected(cam);
+              }}
+              className="w-full appearance-none text-[14px] font-medium pl-4 pr-10 py-3 cursor-pointer"
+              style={{
+                background: 'var(--color-bg)',
+                border: '1px solid var(--color-border)',
+                borderRadius: '12px',
+                color: 'var(--color-text-primary)',
+                outline: 'none',
+              }}
+            >
+              {UDON_CAMERAS.map((cam, i) => (
+                <option key={i} value={cam.stream}>{cam.name}</option>
+              ))}
+            </select>
+            <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-secondary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="6,9 12,15 18,9"/>
+              </svg>
+            </div>
           </div>
+        </div>
+
+        {/* Video */}
+        <div className="p-4">
+          <HLSPlayer key={selected.stream} src={selected.stream} camName={selected.name} />
+        </div>
+
+        {/* Caption */}
+        <div className="px-4 pb-4 text-center">
+          <p className="font-bold text-[15px]" style={{ color: 'var(--color-text-primary)' }}>{selected.name}</p>
+          <p className="text-[11px] mt-1" style={{ color: 'var(--color-text-secondary)' }}>สัญญาณจาก · เทศบาลนครอุดรธานี</p>
         </div>
       </div>
 
-      {/* Video */}
-      <div style={{ borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-card)', overflow: 'hidden' }}>
-        <HLSPlayer key={selected.stream} src={selected.stream} camName={selected.name} />
-      </div>
-
-      {/* Caption */}
-      <p className="text-center font-semibold text-[13px]" style={{ color: 'var(--color-text-primary)' }}>{selected.name}</p>
-      <p className="text-[11px] text-center -mt-2" style={{ color: 'var(--color-text-secondary)' }}>
-        สัญญาณจาก · เทศบาลนครอุดรธานี
-      </p>
     </div>
   );
 }
