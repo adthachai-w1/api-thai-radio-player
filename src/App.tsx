@@ -165,74 +165,79 @@ function HLSPlayer({ src, camName }: { src: string; camName: string }) {
 function TrafficViewer() {
   const [selected, setSelected] = useState(UDON_CAMERAS[0]);
 
-  const handleSelect = (cam: typeof UDON_CAMERAS[0]) => {
-    setSelected(cam);
-  };
-
   return (
-    <div className="flex-1 flex flex-col md:flex-row gap-4 px-4 md:px-6 py-5 max-w-7xl mx-auto w-full">
+    <div className="flex-1 flex flex-col gap-4 px-4 md:px-6 py-5 max-w-5xl mx-auto w-full">
 
-      {/* ── Camera list ── */}
-      <div className="md:w-64 lg:w-72 flex-shrink-0 flex flex-col overflow-hidden"
-        style={{ borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border)', background: 'var(--color-surface)', boxShadow: 'var(--shadow-card)' }}>
-        <div className="px-4 py-3 flex items-center gap-2" style={{ borderBottom: '1px solid var(--color-border)' }}>
+      {/* ── Top bar: dropdown + ดูทั้งหมด ── */}
+      <div className="flex items-center gap-3 flex-wrap">
+
+        {/* List View label */}
+        <div className="flex items-center gap-2 flex-shrink-0">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--color-brand)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/>
           </svg>
-          <span className="font-bold text-[13px]" style={{ color: 'var(--color-text-primary)' }}>เลือกจุดที่ต้องการดู</span>
-          <span className="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full"
-            style={{ background: 'var(--color-green-100)', color: 'var(--color-brand)' }}>
-            {UDON_CAMERAS.length} จุด
-          </span>
+          <span className="font-bold text-[13px]" style={{ color: 'var(--color-text-primary)' }}>List View</span>
         </div>
 
-        <div className="overflow-y-auto flex-1">
-          {UDON_CAMERAS.map((cam, i) => {
-            const active = selected.stream === cam.stream;
-            return (
-              <button key={i} onClick={() => handleSelect(cam)}
-                className="w-full text-left flex items-center gap-3 px-4 py-3 transition-all"
-                style={{
-                  borderBottom: '1px solid var(--color-border)',
-                  background: active ? 'var(--color-green-100)' : 'transparent',
-                  borderLeft: active ? '3px solid var(--color-brand)' : '3px solid transparent',
-                }}>
-                <span className="w-2 h-2 rounded-full flex-shrink-0"
-                  style={{ background: active ? 'var(--color-brand)' : '#22c55e' }} />
-                <span className="text-[12.5px] leading-snug"
-                  style={{ color: active ? 'var(--color-brand)' : 'var(--color-text-primary)', fontWeight: active ? 600 : 400 }}>
-                  {cam.name}
-                </span>
-                {active && (
-                  <svg className="ml-auto flex-shrink-0" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--color-brand)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="9,18 15,12 9,6"/>
-                  </svg>
-                )}
-              </button>
-            );
-          })}
+        {/* Dropdown */}
+        <div className="flex-1 relative min-w-[200px]">
+          <select
+            value={selected.stream}
+            onChange={e => {
+              const cam = UDON_CAMERAS.find(c => c.stream === e.target.value);
+              if (cam) setSelected(cam);
+            }}
+            className="w-full appearance-none font-semibold text-[13px] pl-4 pr-10 py-2.5 rounded-xl cursor-pointer transition-all"
+            style={{
+              background: 'var(--color-surface)',
+              border: '1px solid var(--color-border)',
+              color: 'var(--color-text-primary)',
+              boxShadow: 'var(--shadow-card)',
+              outline: 'none',
+            }}
+          >
+            {UDON_CAMERAS.map((cam, i) => (
+              <option key={i} value={cam.stream}>{cam.name}</option>
+            ))}
+          </select>
+          {/* Chevron icon */}
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-secondary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="6,9 12,15 18,9"/>
+            </svg>
+          </div>
         </div>
+
+        {/* ดูทั้งหมด button */}
+        <a href="https://www.udoncity.go.th/frontend/web/cctv/list"
+          target="_blank" rel="noopener noreferrer"
+          className="flex-shrink-0 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-[12px] text-white transition-all hover:opacity-90 active:scale-95"
+          style={{ background: 'var(--color-brand)', boxShadow: '0 2px 8px rgba(125,157,133,0.35)' }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+            <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+          </svg>
+          ดูทั้งหมด
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15,3 21,3 21,9"/><line x1="10" y1="14" x2="21" y2="3"/>
+          </svg>
+        </a>
       </div>
 
-      {/* ── Video panel ── */}
-      <div className="flex-1 flex flex-col gap-2">
-        {/* Label bar */}
-        <div className="flex items-center gap-2 px-1">
-          <span className="w-2 h-2 rounded-full" style={{ background: '#22c55e' }} />
-          <span className="font-bold text-[13px]" style={{ color: 'var(--color-text-primary)' }}>{selected.name}</span>
-          <span className="badge-live ml-2"><span className="dot" />LIVE</span>
-        </div>
-
-        {/* HLS Video player */}
-        <div className="flex-1 overflow-hidden"
-          style={{ borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-card)', minHeight: '420px' }}>
-          <HLSPlayer key={selected.stream} src={selected.stream} camName={selected.name} />
-        </div>
-
-        <p className="text-[11px] text-center" style={{ color: 'var(--color-text-secondary)' }}>
-          สัญญาณจาก · เทศบาลนครอุดรธานี (streaming.udoncity.go.th)
-        </p>
+      {/* ── HLS Video player ── */}
+      <div className="overflow-hidden"
+        style={{ borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-card)', minHeight: '480px' }}>
+        <HLSPlayer key={selected.stream} src={selected.stream} camName={selected.name} />
       </div>
+
+      {/* Camera name caption */}
+      <p className="text-center font-semibold text-[13px]" style={{ color: 'var(--color-text-primary)' }}>
+        {selected.name}
+      </p>
+
+      <p className="text-[11px] text-center -mt-2" style={{ color: 'var(--color-text-secondary)' }}>
+        สัญญาณจาก · เทศบาลนครอุดรธานี
+      </p>
     </div>
   );
 }
