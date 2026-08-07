@@ -129,17 +129,25 @@ function TrafficViewer() {
           <span className="badge-live ml-2"><span className="dot" />LIVE</span>
         </div>
 
-        {/* iframe */}
+        {/* iframe — ซ่อน header ของ khonkaenlink ด้วย overflow:hidden + margin ลบ */}
         <div className="flex-1 overflow-hidden"
-          style={{ borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-card)', minHeight: '400px', background: '#000' }}>
-          <iframe
-            key={selected.param}
-            src={`https://khonkaenlink.info/cctv/?cam=${selected.param}`}
-            title={selected.name}
-            className="w-full h-full"
-            style={{ minHeight: '400px', border: 'none', display: 'block' }}
-            allowFullScreen
-          />
+          style={{ borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-card)', minHeight: '400px', background: '#000', position: 'relative' }}>
+          {/* wrapper ที่ clip header ออก (~80px) */}
+          <div style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
+            <iframe
+              key={selected.param}
+              src={`https://khonkaenlink.info/cctv/?cam=${selected.param}`}
+              title={selected.name}
+              style={{
+                border: 'none',
+                display: 'block',
+                width: '100%',
+                height: 'calc(100% + 160px)',
+                marginTop: '-80px',
+              }}
+              allowFullScreen
+            />
+          </div>
         </div>
 
         <p className="text-[11px] text-center" style={{ color: 'var(--color-text-secondary)' }}>
