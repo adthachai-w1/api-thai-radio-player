@@ -89,7 +89,7 @@ const LNG = 103.160999;
 const MAPS_LINK = `https://www.google.com/maps?q=${LAT},${LNG}`;
 const SHOPEE_URL = "https://collshp.com/adthachai943/category/3857411?view=storefront";
 
-type Page = 'home' | 'contact';
+type Page = 'home' | 'contact' | 'traffic';
 
 export default function App() {
   const [page, setPage] = useState<Page>('home');
@@ -541,6 +541,7 @@ export default function App() {
 
           <nav className="hidden md:flex flex-1 items-center justify-center gap-10" role="navigation" aria-label="เมนูหลัก">
             <button onClick={() => navigateTo('home')} className={`nav-link ${page === 'home' ? 'active' : ''}`}>หน้าแรก</button>
+            <button onClick={() => navigateTo('traffic')} className={`nav-link ${page === 'traffic' ? 'active' : ''}`}>ดูการจราจร</button>
             <button onClick={() => navigateTo('contact')} className={`nav-link ${page === 'contact' ? 'active' : ''}`}>ติดต่อโฆษณา</button>
           </nav>
 
@@ -569,6 +570,10 @@ export default function App() {
                 <button onClick={() => navigateTo('home')}
                   className={`text-left py-2.5 px-4 rounded-xl font-semibold text-[13px] transition-all ${page === 'home' ? 'bg-white/15 text-white' : 'text-white/60 hover:text-white hover:bg-white/08'}`}>
                   หน้าแรก
+                </button>
+                <button onClick={() => navigateTo('traffic')}
+                  className={`text-left py-2.5 px-4 rounded-xl font-semibold text-[13px] transition-all ${page === 'traffic' ? 'bg-white/15 text-white' : 'text-white/60 hover:text-white hover:bg-white/08'}`}>
+                  ดูการจราจร
                 </button>
                 <button onClick={() => navigateTo('contact')}
                   className={`text-left py-2.5 px-4 rounded-xl font-semibold text-[13px] transition-all ${page === 'contact' ? 'bg-white/15 text-white' : 'text-white/60 hover:text-white hover:bg-white/08'}`}>
@@ -845,6 +850,62 @@ export default function App() {
                     <a href="#" className="hover:text-white/55 transition-colors">ข้อกำหนดการใช้งาน</a>
                   </div>
                 </div>
+              </div>
+            </footer>
+          </motion.div>
+        )}
+
+        {/* ═══ TRAFFIC PAGE ═══ */}
+        {page === 'traffic' && (
+          <motion.div key="traffic" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.25 }}
+            className="flex-1 flex flex-col" style={{ background: 'var(--color-bg)' }}>
+
+            {/* Page Hero */}
+            <div className="has-noise relative overflow-hidden py-12 px-4 md:px-8"
+              style={{ background: 'linear-gradient(150deg, var(--color-hero-from) 0%, var(--color-green-500) 100%)' }}>
+              <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+                <div className="absolute top-0 right-0 w-[45%] h-full"
+                  style={{ background: 'radial-gradient(circle at 85% 40%, rgba(255,255,255,0.1) 0%, transparent 65%)' }} />
+              </div>
+              <div className="relative z-10 max-w-5xl mx-auto">
+                <p className="section-label text-white/60">CCTV · เทศบาลนครอุดรธานี</p>
+                <h1 className="text-3xl md:text-4xl font-black text-white mb-1.5 leading-tight">ดูการจราจรสด</h1>
+                <p className="text-white/50 text-[13px] tracking-wide">ข้อมูลกล้อง CCTV แบบ Real-time · อุดรธานี</p>
+              </div>
+            </div>
+
+            {/* iframe embed */}
+            <div className="flex-1 flex flex-col px-4 md:px-8 py-6 max-w-5xl mx-auto w-full">
+              <div className="flex-1 overflow-hidden"
+                style={{ borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-card)', minHeight: '600px' }}>
+                <iframe
+                  src="https://www.udoncity.go.th/frontend/web/cctv/map"
+                  title="กล้อง CCTV จราจร อุดรธานี"
+                  className="w-full h-full"
+                  style={{ minHeight: '600px', border: 'none', display: 'block' }}
+                  allowFullScreen
+                  loading="lazy"
+                />
+              </div>
+              <p className="mt-3 text-center text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>
+                ข้อมูลจาก · <a href="https://www.udoncity.go.th/frontend/web/cctv/map" target="_blank" rel="noopener noreferrer"
+                  className="underline hover:opacity-70 transition-opacity" style={{ color: 'var(--color-brand)' }}>
+                  เทศบาลนครอุดรธานี
+                </a>
+              </p>
+            </div>
+
+            {/* Footer compact */}
+            <footer className="site-footer text-white mt-4">
+              <div className="max-w-5xl mx-auto px-4 md:px-8 py-7 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-full overflow-hidden ring-1 ring-white/15">
+                    <img src={iconKaew} alt="" className="w-full h-full object-cover"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                  </div>
+                  <span className="font-bold text-[12px] tracking-widest text-white/80">KUKAEW RADIO FM 93.00</span>
+                </div>
+                <p className="text-[11px] text-white/30">© 2024 กู่แก้ววิทยุ. สงวนลิขสิทธิ์</p>
               </div>
             </footer>
           </motion.div>
