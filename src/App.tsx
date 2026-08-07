@@ -58,16 +58,16 @@ const CCTV_CAMERAS = [
 
 // ─── Traffic Viewer Component ─────────────────────────────────────────────────
 const UDON_CAMERAS = [
-  { name: 'วงเวียนกรมหลวงประจักษ์ศิลปาคม SPD',          param: 'udon-spd' },
-  { name: 'แยกเซ็นทรัล',                                  param: 'udon-central' },
-  { name: 'แยกหน้าสถานีรถไฟ',                             param: 'udon-train1' },
-  { name: 'แยกสถานีรถไฟ ถนนประจักษ์',                     param: 'udon-train2' },
-  { name: 'แยกคอกม้า',                                    param: 'udon-kokma' },
-  { name: 'แยกอาชีวศึกษา ด้านถนนประชารักษา',              param: 'udon-ach1' },
-  { name: 'แยกอาชีวศึกษา ด้านถนนเพาะนิยม',               param: 'udon-ach2' },
-  { name: 'แยกหน้าโรงเรียนอุดรพิทยานุกูล ถนนโพศรี',      param: 'udon-upit' },
-  { name: 'แยก VT แหนมเนือง',                             param: 'udon-vt' },
-  { name: 'แยกต้อยลาบเป็ด',                               param: 'udon-toilab' },
+  { name: 'วงเวียนกรมหลวงประจักษ์ศิลปาคม SPD',          param: 'อุดรธานี - วงเวียนกรมหลวงประจักษ์ศิลปาคม SPD' },
+  { name: 'แยกเซ็นทรัล',                                  param: 'อุดรธานี - แยกเซ็นทรัล' },
+  { name: 'แยกหน้าสถานีรถไฟ',                             param: 'อุดรธานี - แยกหน้าสถานีรถไฟ' },
+  { name: 'แยกสถานีรถไฟ ถนนประจักษ์',                     param: 'อุดรธานี - แยกสถานีรถไฟ ถนนประจักษ์' },
+  { name: 'แยกคอกม้า',                                    param: 'อุดรธานี - แยกคอกม้า' },
+  { name: 'แยกอาชีวศึกษา ด้านถนนประชารักษา',              param: 'อุดรธานี - แยกอาชีวศึกษา ด้านถนนประชารักษา' },
+  { name: 'แยกอาชีวศึกษา ด้านถนนเพาะนิยม',               param: 'อุดรธานี - แยกอาชีวศึกษา ด้านถนนเพาะนิยม' },
+  { name: 'แยกหน้าโรงเรียนอุดรพิทยานุกูล ถนนโพศรี',      param: 'อุดรธานี - แยกหน้าโรงเรียนอุดรพิทยานุกูล ถนนโพศรี' },
+  { name: 'แยก VT แหนมเนือง',                             param: 'อุดรธานี - แยก VTแหนมเนือง' },
+  { name: 'แยกต้อยลาบเป็ด',                               param: 'อุดรธานี - แยกต้อยลาบเป็ด' },
 ];
 
 function TrafficViewer() {
@@ -129,21 +129,20 @@ function TrafficViewer() {
           <span className="badge-live ml-2"><span className="dot" />LIVE</span>
         </div>
 
-        {/* iframe — ซ่อน header ของ khonkaenlink ด้วย overflow:hidden + margin ลบ */}
+        {/* iframe — ซ่อน header + dropdown ของ khonkaenlink */}
         <div className="flex-1 overflow-hidden"
-          style={{ borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-card)', minHeight: '400px', background: '#000', position: 'relative' }}>
-          {/* wrapper ที่ clip header ออก (~80px) */}
+          style={{ borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-card)', minHeight: '400px', background: '#111', position: 'relative' }}>
           <div style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
             <iframe
               key={selected.param}
-              src={`https://khonkaenlink.info/cctv/?cam=${selected.param}`}
+              src={`https://khonkaenlink.info/cctv/?cam=${encodeURIComponent(selected.param)}`}
               title={selected.name}
               style={{
                 border: 'none',
                 display: 'block',
                 width: '100%',
-                height: 'calc(100% + 160px)',
-                marginTop: '-80px',
+                height: 'calc(100% + 320px)',
+                marginTop: '-160px',
               }}
               allowFullScreen
             />
