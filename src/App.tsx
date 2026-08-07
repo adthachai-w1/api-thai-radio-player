@@ -57,228 +57,37 @@ const CCTV_CAMERAS = [
 ];
 
 // ─── Traffic Viewer Component ─────────────────────────────────────────────────
-// ─── Camera data with direct HLS stream URLs ─────────────────────────────────
-const UDON_CAMERAS = [
-  { name: 'วงเวียนกรมหลวงประจักษ์ศิลปาคม SPD',       stream: 'https://streaming.udoncity.go.th:1935/live/cctv_121.stream/chunklist_w2010918290.m3u8' },
-  { name: 'แยกเซ็นทรัล',                               stream: 'https://streaming.udoncity.go.th:1935/live/Axis_12_38.stream/chunklist_w1610502304.m3u8' },
-  { name: 'แยกหน้าสถานีรถไฟ',                          stream: 'https://streaming.udoncity.go.th:1935/live/Axis_12_33.stream/chunklist_w34733218.m3u8' },
-  { name: 'แยกสถานีรถไฟ ถนนประจักษ์',                  stream: 'https://streaming.udoncity.go.th:1935/live/Axis_12_34.stream/chunklist_w354640472.m3u8' },
-  { name: 'แยกคอกม้า',                                 stream: 'https://streaming.udoncity.go.th:1935/live/Axis_12_52.stream/chunklist_w573818671.m3u8' },
-  { name: 'แยกอาชีวศึกษา ด้านถนนประชารักษา',           stream: 'https://streaming.udoncity.go.th:1935/live/Axis_7.21.stream/chunklist_w1836293394.m3u8' },
-  { name: 'แยกอาชีวศึกษา ด้านถนนเพาะนิยม',            stream: 'https://streaming.udoncity.go.th:1935/live/Axis_IP724.stream/chunklist_w741016741.m3u8' },
-  { name: 'แยกหน้าโรงเรียนอุดรพิทยานุกูล ถนนโพศรี',   stream: 'https://streaming.udoncity.go.th:1935/live/Axis_IP727.stream/chunklist_w1204838826.m3u8' },
-  { name: 'แยก VT แหนมเนือง',                          stream: 'https://streaming.udoncity.go.th:1935/live/Bosch_IP2.9.stream/chunklist_w1021328968.m3u8' },
-  { name: 'แยกต้อยลาบเป็ด',                            stream: 'https://streaming.udoncity.go.th:1935/live/Bosch_IP2.17.stream/chunklist_w941487597.m3u8' },
-];
-
-// ─── HLS Video Player Component ──────────────────────────────────────────────
-function HLSPlayer({ src, camName }: { src: string; camName: string }) {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const hlsRef = useRef<any>(null);
-  const [status, setStatus] = useState<'loading' | 'playing' | 'error'>('loading');
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    setStatus('loading');
-
-    // Destroy previous HLS instance
-    if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
-
-    const loadHls = () => {
-      const Hls = (window as any).Hls;
-      if (!Hls) return;
-
-      if (Hls.isSupported()) {
-        const hls = new Hls({ enableWorker: false, lowLatencyMode: true });
-        hlsRef.current = hls;
-        hls.loadSource(src);
-        hls.attachMedia(video);
-        hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          video.play().catch(() => {});
-        });
-        hls.on(Hls.Events.ERROR, (_: any, data: any) => {
-          if (data.fatal) setStatus('error');
-        });
-        video.onplaying = () => setStatus('playing');
-      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-        // Safari native HLS
-        video.src = src;
-        video.play().catch(() => {});
-        video.onplaying = () => setStatus('playing');
-        video.onerror = () => setStatus('error');
-      } else {
-        setStatus('error');
-      }
-    };
-
-    // Load hls.js script once
-    if ((window as any).Hls) {
-      loadHls();
-    } else {
-      const script = document.createElement('script');
-      script.src = 'https://cdn.jsdelivr.net/npm/hls.js@latest/dist/hls.min.js';
-      script.onload = loadHls;
-      script.onerror = () => setStatus('error');
-      document.head.appendChild(script);
-    }
-
-    return () => {
-      if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
-    };
-  }, [src]);
-
-  return (
-    <div className="relative w-full h-full" style={{ background: '#111', borderRadius: 'var(--radius-lg)' }}>
-      <video ref={videoRef} muted autoPlay playsInline
-        className="w-full h-full"
-        style={{ display: status === 'playing' ? 'block' : 'none', borderRadius: 'var(--radius-lg)', objectFit: 'cover' }}
-      />
-
-      {/* Loading state */}
-      {status === 'loading' && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-          <div className="w-10 h-10 rounded-full border-[3px] border-white/10 border-t-white animate-spin" />
-          <p className="text-white/50 text-[12px] font-medium">{camName}</p>
-          <p className="text-white/30 text-[11px]">กำลังเชื่อมต่อสัญญาณ...</p>
-        </div>
-      )}
-
-      {/* Error state */}
-      {status === 'error' && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-          <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: 'rgba(220,38,38,0.15)' }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f87171" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-            </svg>
-          </div>
-          <p className="text-white/60 text-[13px] font-semibold">{camName}</p>
-          <p className="text-white/30 text-[11px]">กล้องออฟไลน์หรือสัญญาณขัดข้อง</p>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Traffic Viewer Component ─────────────────────────────────────────────────
+// ─── Traffic Viewer — embed udoncity list view full ──────────────────────────
 function TrafficViewer() {
-  const [selected, setSelected] = useState(UDON_CAMERAS[0]);
-  const [loading, setLoading] = useState(true);
-  const [iframeKey, setIframeKey] = useState(0);
-
-  const handleChange = (cam: typeof UDON_CAMERAS[0]) => {
-    setSelected(cam);
-    setLoading(true);
-    setIframeKey(k => k + 1);
-  };
-
-  // udoncity list view — ดูแต่ละกล้องผ่าน id หรือ stream name
-  // เราจะ embed /cctv/list แล้ว crop เอาเฉพาะส่วน card
-  // แต่ถ้า block iframe → fallback ไปใช้ HLS player ของเราเอง
-  const [useHLS, setUseHLS] = useState(false);
-
-  const handleIframeError = () => setUseHLS(true);
-  const handleIframeLoad = () => {
-    setTimeout(() => setLoading(false), 1000);
-  };
-
   return (
-    <div className="flex-1 flex flex-col gap-3 px-4 md:px-6 py-5 max-w-5xl mx-auto w-full">
-
-      {/* ── Top bar ── */}
-      <div className="flex items-center gap-3 flex-wrap">
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-brand)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
-            <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
-          </svg>
-          <span className="font-bold text-[13px]" style={{ color: 'var(--color-text-primary)' }}>List View</span>
-        </div>
-
-        {/* Dropdown */}
-        <div className="flex-1 relative min-w-[180px]">
-          <select
-            value={selected.stream}
-            onChange={e => {
-              const cam = UDON_CAMERAS.find(c => c.stream === e.target.value);
-              if (cam) handleChange(cam);
-            }}
-            className="w-full appearance-none font-semibold text-[13px] pl-4 pr-9 py-2.5 rounded-xl cursor-pointer"
+    <div className="flex-1 flex flex-col px-4 md:px-6 py-5 max-w-5xl mx-auto w-full">
+      {/* Crop wrapper: ซ่อน header/nav ของ udoncity (~130px) และ footer (~80px) */}
+      <div className="relative overflow-hidden flex-1"
+        style={{
+          borderRadius: 'var(--radius-lg)',
+          border: '1px solid var(--color-border)',
+          boxShadow: 'var(--shadow-card)',
+          minHeight: '700px',
+          background: '#f5f5f5',
+        }}>
+        <div style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
+          <iframe
+            src="https://www.udoncity.go.th/frontend/web/cctv/list"
+            title="CCTV อุดรธานี - List View"
             style={{
-              background: 'var(--color-surface)',
-              border: '1px solid var(--color-border)',
-              color: 'var(--color-text-primary)',
-              boxShadow: 'var(--shadow-card)',
-              outline: 'none',
+              border: 'none',
+              display: 'block',
+              width: '100%',
+              height: 'calc(100% + 210px)',
+              marginTop: '-130px',
             }}
-          >
-            {UDON_CAMERAS.map((cam, i) => (
-              <option key={i} value={cam.stream}>{cam.name}</option>
-            ))}
-          </select>
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-secondary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="6,9 12,15 18,9"/>
-            </svg>
-          </div>
+            allowFullScreen
+          />
         </div>
       </div>
-
-      {/* ── Video area ── */}
-      <div className="overflow-hidden relative"
-        style={{ borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-card)', background: '#111', minHeight: '480px' }}>
-
-        {useHLS ? (
-          /* HLS fallback — ถ้า iframe ถูก block */
-          <HLSPlayer key={selected.stream} src={selected.stream} camName={selected.name} />
-        ) : (
-          <>
-            {/* Loading overlay */}
-            {loading && (
-              <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3" style={{ background: '#111' }}>
-                <div className="w-10 h-10 rounded-full border-[3px] border-white/10 border-t-white animate-spin" />
-                <p className="text-white/50 text-[12px] font-medium">{selected.name}</p>
-              </div>
-            )}
-
-            {/* iframe crop wrapper
-                udoncity list view layout (approx):
-                - header nav: ~60px
-                - page title/breadcrumb: ~50px
-                - card header (List View + dropdown): ~100px
-                - video: ~520px
-                - caption: ~50px
-                We pull iframe up by ~210px to skip header/breadcrumb,
-                and make it taller so the video is visible
-            */}
-            <div style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
-              <iframe
-                key={iframeKey}
-                src="https://www.udoncity.go.th/frontend/web/cctv/list"
-                title="CCTV อุดรธานี"
-                onLoad={handleIframeLoad}
-                onError={handleIframeError}
-                style={{
-                  border: 'none',
-                  display: 'block',
-                  width: '100%',
-                  height: 'calc(100% + 420px)',
-                  marginTop: '-210px',
-                }}
-                allowFullScreen
-              />
-            </div>
-          </>
-        )}
-      </div>
-
-      {/* Caption */}
-      <p className="text-center font-semibold text-[13px]" style={{ color: 'var(--color-text-primary)' }}>
-        {selected.name}
-      </p>
-      <p className="text-[11px] text-center -mt-2" style={{ color: 'var(--color-text-secondary)' }}>
-        สัญญาณจาก · เทศบาลนครอุดรธานี
+      <p className="mt-3 text-[11px] text-center" style={{ color: 'var(--color-text-secondary)' }}>
+        ข้อมูลจาก · <a href="https://www.udoncity.go.th/frontend/web/cctv/list" target="_blank" rel="noopener noreferrer"
+          className="underline hover:opacity-70" style={{ color: 'var(--color-brand)' }}>เทศบาลนครอุดรธานี</a>
       </p>
     </div>
   );
