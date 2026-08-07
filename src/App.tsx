@@ -72,52 +72,29 @@ const UDON_CAMERAS = [
 
 function TrafficViewer() {
   const [selected, setSelected] = useState(UDON_CAMERAS[0]);
-  const [ready, setReady] = useState(false);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-  const pendingLabel = useRef<string>(UDON_CAMERAS[0].label);
+  const [loading, setLoading] = useState(true);
+  // iframeKey forces full remount (new src) every camera change
+  const [iframeKey, setIframeKey] = useState(0);
 
-  // inject dropdown selection into iframe
-  const injectSelect = (label: string) => {
-    try {
-      const doc = iframeRef.current?.contentDocument;
-      if (!doc) return false;
-      const sel = doc.querySelector('select') as HTMLSelectElement | null;
-      if (!sel) return false;
-      const opt = Array.from(sel.options).find(o => o.text.trim() === label || o.value.trim() === label);
-      if (!opt) return false;
-      sel.value = opt.value;
-      sel.dispatchEvent(new Event('change', { bubbles: true }));
-      return true;
-    } catch { return false; }
-  };
-
-  // on iframe load: wait for JS init, then inject
-  const handleLoad = () => {
-    setReady(false);
-    setTimeout(() => {
-      const ok = injectSelect(pendingLabel.current);
-      setReady(ok);
-    }, 1200);
-  };
-
-  // when user picks camera
   const handleSelect = (cam: typeof UDON_CAMERAS[0]) => {
+    if (cam.label === selected.label) return;
     setSelected(cam);
-    pendingLabel.current = cam.label;
-    if (ready) {
-      injectSelect(cam.label);
-    } else {
-      // iframe not ready — reload with query hint
-      if (iframeRef.current) {
-        iframeRef.current.src = `https://khonkaenlink.info/cctv/?cam=${encodeURIComponent(cam.label)}`;
-      }
-    }
+    setLoading(true);
+    setIframeKey(k => k + 1); // triggers iframe remount with new src
   };
+
+  // After iframe loads, wait for khonkaenlink JS to finish rendering (~1.8s)
+  // then hide overlay to reveal the video (header/dropdown already clipped)
+  const handleLoad = () => {
+    setTimeout(() => setLoading(false), 1800);
+  };
+
+  const iframeSrc = `https://khonkaenlink.info/cctv/?cam=${encodeURIComponent(selected.label)}`;
 
   return (
     <div className="flex-1 flex flex-col md:flex-row gap-4 px-4 md:px-6 py-5 max-w-7xl mx-auto w-full">
 
-      {/* Camera list sidebar */}
+      {/* ── Camera list ── */}
       <div className="md:w-64 lg:w-72 flex-shrink-0 flex flex-col overflow-hidden"
         style={{ borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border)', background: 'var(--color-surface)', boxShadow: 'var(--shadow-card)' }}>
         <div className="px-4 py-3 flex items-center gap-2" style={{ borderBottom: '1px solid var(--color-border)' }}>
@@ -159,21 +136,38 @@ function TrafficViewer() {
         </div>
       </div>
 
-      {/* Video panel */}
+      {/* ── Video panel ── */}
       <div className="flex-1 flex flex-col gap-2 min-h-[400px]">
         <div className="flex items-center gap-2 px-1">
           <span className="w-2 h-2 rounded-full" style={{ background: '#22c55e' }} />
           <span className="font-bold text-[13px]" style={{ color: 'var(--color-text-primary)' }}>{selected.name}</span>
           <span className="badge-live ml-2"><span className="dot" />LIVE</span>
+          {loading && (
+            <span className="ml-2 text-[11px] font-medium" style={{ color: 'var(--color-text-secondary)' }}>
+              กำลังโหลด...
+            </span>
+          )}
         </div>
 
-        <div className="flex-1 overflow-hidden"
-          style={{ borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-card)', minHeight: '400px', background: '#111', position: 'relative' }}>
+        {/* iframe wrapper — clips header + dropdown + footer of khonkaenlink */}
+        <div className="flex-1 relative overflow-hidden"
+          style={{ borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-card)', minHeight: '400px', background: '#111' }}>
+
+          {/* Loading overlay — shows spinner, hides khonkaenlink UI while it renders */}
+          {loading && (
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3"
+              style={{ background: '#111', borderRadius: 'var(--radius-lg)' }}>
+              <div className="w-10 h-10 rounded-full border-[3px] border-white/10 border-t-white animate-spin" />
+              <p className="text-white/50 text-[12px] font-medium">{selected.name}</p>
+            </div>
+          )}
+
+          {/* Clipping wrapper: ซ่อน header (~80px) + dropdown (~80px) = 160px บน, footer ~80px ล่าง */}
           <div style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
             <iframe
-              ref={iframeRef}
-              src={`https://khonkaenlink.info/cctv/?cam=${encodeURIComponent(UDON_CAMERAS[0].label)}`}
-              title="CCTV อุดรธานี"
+              key={iframeKey}
+              src={iframeSrc}
+              title={selected.name}
               onLoad={handleLoad}
               style={{
                 border: 'none',
