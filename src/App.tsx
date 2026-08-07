@@ -34,6 +34,185 @@ import iconKaew from "./images/icon-kaew.png";
 import { motion, AnimatePresence } from 'motion/react';
 import COVER_IMAGE_URL from "./images/photo-1.png";
 
+// ─── CCTV Camera Data ────────────────────────────────────────────────────────
+const CCTV_CAMERAS = [
+  { name: 'วงเวียนกรมหลวงประจักษ์ศิลปาคม SPD', lat: 17.4138, lng: 102.7872 },
+  { name: 'แยกสุครัทรา ด้านถนนสุครัทรา', lat: 17.4101, lng: 102.7856 },
+  { name: 'แยกอาชีวศึกษา ด้านถนนประชารักษา', lat: 17.4155, lng: 102.7903 },
+  { name: 'แยกอาชีวศึกษา ด้านถนนเพาะนิยม', lat: 17.4160, lng: 102.7895 },
+  { name: 'แยกเรือนจำ ถนนหมากแข้ง', lat: 17.4080, lng: 102.7820 },
+  { name: 'แยกจุดกลับรถหน้าตลาดเมืองทองขาออก', lat: 17.4200, lng: 102.7930 },
+  { name: 'แยกตลาดไทยอีสานแยกถนนสุสการ', lat: 17.4175, lng: 102.7845 },
+  { name: 'แยกปากซอยประชาสันติ', lat: 17.4090, lng: 102.7865 },
+  { name: 'แยกหน้าโรงเรียนอุดรคริสเตียน', lat: 17.4120, lng: 102.7880 },
+  { name: 'แยกหน้าโรงเรียนอุดรพิทยานุกูล ถนนโพศรี', lat: 17.4145, lng: 102.7920 },
+  { name: 'แยกชลประทาน', lat: 17.4060, lng: 102.7840 },
+  { name: 'แยกริเบต', lat: 17.4185, lng: 102.7860 },
+  { name: 'แยกหน้าสถานีรถไฟ', lat: 17.4035, lng: 102.7870 },
+  { name: 'แยกโพธิ์ศรี ด้านถนนโพธิ์ศรี', lat: 17.4130, lng: 102.7910 },
+  { name: 'แยกโพธิ์ศรี ด้านถนนอธิบดี', lat: 17.4125, lng: 102.7905 },
+  { name: 'แยกหน้าโรงพยาบาลอุดรธานี', lat: 17.4050, lng: 102.7890 },
+  { name: 'แยกหน้าศาลากลางจังหวัด', lat: 17.4170, lng: 102.7940 },
+  { name: 'แยกถนนทหาร-ถนนอุดรดุษฎี', lat: 17.4110, lng: 102.7830 },
+];
+
+// ─── Traffic Viewer Component ─────────────────────────────────────────────────
+const UDON_CAMERAS = [
+  { name: 'วงเวียนกรมหลวงประจักษ์ศิลปาคม SPD',          param: 'udon-spd' },
+  { name: 'แยกเซ็นทรัล',                                  param: 'udon-central' },
+  { name: 'แยกหน้าสถานีรถไฟ',                             param: 'udon-train1' },
+  { name: 'แยกสถานีรถไฟ ถนนประจักษ์',                     param: 'udon-train2' },
+  { name: 'แยกคอกม้า',                                    param: 'udon-kokma' },
+  { name: 'แยกอาชีวศึกษา ด้านถนนประชารักษา',              param: 'udon-ach1' },
+  { name: 'แยกอาชีวศึกษา ด้านถนนเพาะนิยม',               param: 'udon-ach2' },
+  { name: 'แยกหน้าโรงเรียนอุดรพิทยานุกูล ถนนโพศรี',      param: 'udon-upit' },
+  { name: 'แยก VT แหนมเนือง',                             param: 'udon-vt' },
+  { name: 'แยกต้อยลาบเป็ด',                               param: 'udon-toilab' },
+];
+
+function TrafficViewer() {
+  const [selected, setSelected] = useState(UDON_CAMERAS[0]);
+
+  return (
+    <div className="flex-1 flex flex-col md:flex-row gap-4 px-4 md:px-6 py-5 max-w-7xl mx-auto w-full">
+
+      {/* Camera list sidebar */}
+      <div className="md:w-64 lg:w-72 flex-shrink-0 flex flex-col overflow-hidden"
+        style={{ borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border)', background: 'var(--color-surface)', boxShadow: 'var(--shadow-card)' }}>
+        {/* Header */}
+        <div className="px-4 py-3 flex items-center gap-2" style={{ borderBottom: '1px solid var(--color-border)' }}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--color-brand)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/>
+          </svg>
+          <span className="font-bold text-[13px]" style={{ color: 'var(--color-text-primary)' }}>เลือกจุดที่ต้องการดู</span>
+          <span className="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full"
+            style={{ background: 'var(--color-green-100)', color: 'var(--color-brand)' }}>
+            {UDON_CAMERAS.length} จุด
+          </span>
+        </div>
+
+        {/* List */}
+        <div className="overflow-y-auto flex-1">
+          {UDON_CAMERAS.map((cam, i) => {
+            const active = selected.param === cam.param;
+            return (
+              <button key={i} onClick={() => setSelected(cam)}
+                className="w-full text-left flex items-center gap-3 px-4 py-3 transition-all"
+                style={{
+                  borderBottom: '1px solid var(--color-border)',
+                  background: active ? 'var(--color-green-100)' : 'transparent',
+                  borderLeft: active ? '3px solid var(--color-brand)' : '3px solid transparent',
+                }}>
+                <span className="w-2 h-2 rounded-full flex-shrink-0"
+                  style={{ background: active ? 'var(--color-brand)' : '#22c55e' }} />
+                <span className="text-[12.5px] leading-snug"
+                  style={{ color: active ? 'var(--color-brand)' : 'var(--color-text-primary)', fontWeight: active ? 600 : 400 }}>
+                  {cam.name}
+                </span>
+                {active && (
+                  <svg className="ml-auto flex-shrink-0" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--color-brand)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="9,18 15,12 9,6"/>
+                  </svg>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Video panel */}
+      <div className="flex-1 flex flex-col gap-2 min-h-[400px]">
+        {/* Label */}
+        <div className="flex items-center gap-2 px-1">
+          <span className="w-2 h-2 rounded-full" style={{ background: '#22c55e' }} />
+          <span className="font-bold text-[13px]" style={{ color: 'var(--color-text-primary)' }}>{selected.name}</span>
+          <span className="badge-live ml-2"><span className="dot" />LIVE</span>
+        </div>
+
+        {/* iframe */}
+        <div className="flex-1 overflow-hidden"
+          style={{ borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-card)', minHeight: '400px', background: '#000' }}>
+          <iframe
+            key={selected.param}
+            src={`https://khonkaenlink.info/cctv/?cam=${selected.param}`}
+            title={selected.name}
+            className="w-full h-full"
+            style={{ minHeight: '400px', border: 'none', display: 'block' }}
+            allowFullScreen
+          />
+        </div>
+
+        <p className="text-[11px] text-center" style={{ color: 'var(--color-text-secondary)' }}>
+          ข้อมูลจาก ·{' '}
+          <a href="https://khonkaenlink.info/cctv/" target="_blank" rel="noopener noreferrer"
+            className="underline hover:opacity-70 transition-opacity" style={{ color: 'var(--color-brand)' }}>
+            khonkaenlink.info
+          </a>
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ─── Traffic Map Component ────────────────────────────────────────────────────
+function TrafficMap() {
+  const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (mapInstanceRef.current || !mapRef.current) return;
+
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+    document.head.appendChild(link);
+
+    const script = document.createElement('script');
+    script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    script.onload = () => {
+      const L = (window as any).L;
+      const map = L.map(mapRef.current, { zoomControl: true, scrollWheelZoom: false })
+        .setView([17.4138, 102.7872], 14);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors', maxZoom: 19,
+      }).addTo(map);
+
+      const camIcon = L.divIcon({
+        html: `<div style="width:30px;height:30px;background:#22c55e;border:2.5px solid white;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 12px rgba(34,197,94,0.5)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+          </svg>
+        </div>`,
+        className: '', iconSize: [30, 30], iconAnchor: [15, 15],
+      });
+
+      CCTV_CAMERAS.forEach(cam => {
+        L.marker([cam.lat, cam.lng], { icon: camIcon })
+          .addTo(map)
+          .bindPopup(`<div style="font-family:Sarabun,sans-serif;min-width:180px">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+              <span style="width:8px;height:8px;background:#22c55e;border-radius:50%;display:inline-block;flex-shrink:0"></span>
+              <b style="font-size:12px;color:#1C261C">${cam.name}</b>
+            </div>
+            <a href="https://www.udoncity.go.th/frontend/web/cctv/map" target="_blank"
+              style="font-size:11px;color:#7D9D85;text-decoration:none;display:flex;align-items:center;gap:3px;margin-top:4px">
+              ดูกล้อง CCTV สด →
+            </a>
+          </div>`);
+      });
+
+      mapInstanceRef.current = map;
+    };
+    document.head.appendChild(script);
+
+    return () => {
+      if (mapInstanceRef.current) { mapInstanceRef.current.remove(); mapInstanceRef.current = null; }
+    };
+  }, []);
+
+  return <div ref={mapRef} className="w-full h-full" style={{ minHeight: '480px' }} />;
+}
+
 // ─── Leaflet Map Component ───────────────────────────────────────────────────
 function LeafletMap() {
   const mapRef = useRef<HTMLDivElement>(null);
@@ -67,7 +246,7 @@ function LeafletMap() {
       });
       L.marker([LAT, LNG], { icon: customIcon })
         .addTo(map)
-        .bindPopup('<b style="color:var(--color-text-primary)">กู่แก้ววิทยุ FM 93.00</b><br>อำเภอกู่แก้ว อุดรธานี')
+        .bindPopup('<b style="color:var(--color-text-primary)">กู่แก้วเรดิโอ FM 93.00</b><br>อำเภอกู่แก้ว อุดรธานี')
         .openPopup();
       mapInstanceRef.current = map;
     };
@@ -616,7 +795,7 @@ export default function App() {
                   />
                   <div className="relative w-52 h-52 md:w-60 md:h-60 rounded-[28px] overflow-hidden"
                     style={{ boxShadow: '0 24px 64px rgba(0,0,0,0.3), 0 0 0 1.5px rgba(255,255,255,0.18)' }}>
-                    <img src={COVER_IMAGE_URL} alt="ภาพปก กู่แก้ววิทยุ" className="w-full h-full object-cover" />
+                    <img src={COVER_IMAGE_URL} alt="ภาพปก กู่แก้วเรดิโอ" className="w-full h-full object-cover" />
                     <div className="absolute inset-0 pointer-events-none"
                       style={{ background: 'linear-gradient(160deg, rgba(255,255,255,0.08) 0%, transparent 55%)' }} />
                     {/* Like */}
@@ -639,7 +818,7 @@ export default function App() {
                       <div className="badge-live"><span className="dot" aria-hidden="true" />LIVE ON AIR</div>
                     </div>
                     <h1 className="text-[2.6rem] md:text-5xl font-black tracking-tight leading-[1.05] text-white">
-                      กู่แก้ววิทยุ
+                      กู่แก้วเรดิโอ
                     </h1>
                     <p className="text-white/55 text-[13px] tracking-widest font-medium uppercase">
                       FM 93.00 MHz &nbsp;·&nbsp; หมอลำ &nbsp;·&nbsp; ลูกทุ่ง
@@ -763,7 +942,7 @@ export default function App() {
                       <p className="section-label">เกี่ยวกับสถานี</p>
                       <h2 className="text-xl font-bold mb-2 leading-snug" style={{ color: 'var(--color-text-primary)' }}>เสียงแห่งจิตวิญญาณอีสาน</h2>
                       <p className="text-[13.5px] leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
-                        กู่แก้ววิทยุ FM 93.00 MHz คือสถานีวิทยุชุมชนที่นำเสนอเพลงหมอลำ ลูกทุ่งอีสาน และข่าวสารท้องถิ่น
+                        กู่แก้วเรดิโอ FM 93.00 MHz คือสถานีวิทยุชุมชนที่นำเสนอเพลงหมอลำ ลูกทุ่งอีสาน และข่าวสารท้องถิ่น
                         ครอบคลุมอำเภอกู่แก้ว จังหวัดอุดรธานี พร้อมออกอากาศออนไลน์ให้ฟังได้ทั่วโลก
                       </p>
                       <div className="mt-4 flex flex-wrap gap-2">
@@ -844,7 +1023,7 @@ export default function App() {
 
               <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
                 <div className="max-w-5xl mx-auto px-4 md:px-8 py-4 flex flex-col sm:flex-row justify-between items-center gap-2 text-[11px] text-white/30">
-                  <p>© 2024 กู่แก้ววิทยุ FM 93.00 MHz. สงวนลิขสิทธิ์</p>
+                  <p>© 2024 กู่แก้วเรดิโอ FM 93.00 MHz. สงวนลิขสิทธิ์</p>
                   <div className="flex gap-5">
                     <a href="#" className="hover:text-white/55 transition-colors">นโยบายความเป็นส่วนตัว</a>
                     <a href="#" className="hover:text-white/55 transition-colors">ข้อกำหนดการใช้งาน</a>
@@ -861,7 +1040,7 @@ export default function App() {
             className="flex-1 flex flex-col" style={{ background: 'var(--color-bg)' }}>
 
             {/* Page Hero */}
-            <div className="has-noise relative overflow-hidden py-12 px-4 md:px-8"
+            <div className="has-noise relative overflow-hidden py-10 px-4 md:px-8"
               style={{ background: 'linear-gradient(150deg, var(--color-hero-from) 0%, var(--color-green-500) 100%)' }}>
               <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
                 <div className="absolute top-0 right-0 w-[45%] h-full"
@@ -869,35 +1048,17 @@ export default function App() {
               </div>
               <div className="relative z-10 max-w-5xl mx-auto">
                 <p className="section-label text-white/60">CCTV · เทศบาลนครอุดรธานี</p>
-                <h1 className="text-3xl md:text-4xl font-black text-white mb-1.5 leading-tight">ดูการจราจรสด</h1>
-                <p className="text-white/50 text-[13px] tracking-wide">ข้อมูลกล้อง CCTV แบบ Real-time · อุดรธานี</p>
+                <h1 className="text-3xl md:text-4xl font-black text-white mb-1 leading-tight">ดูการจราจรสด</h1>
+                <p className="text-white/50 text-[13px]">กล้อง CCTV จุดสำคัญในอุดรธานี · คลิกเลือกจุดที่ต้องการดู</p>
               </div>
             </div>
 
-            {/* iframe embed */}
-            <div className="flex-1 flex flex-col px-4 md:px-8 py-6 max-w-5xl mx-auto w-full">
-              <div className="flex-1 overflow-hidden"
-                style={{ borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-card)', minHeight: '600px' }}>
-                <iframe
-                  src="https://www.udoncity.go.th/frontend/web/cctv/map"
-                  title="กล้อง CCTV จราจร อุดรธานี"
-                  className="w-full h-full"
-                  style={{ minHeight: '600px', border: 'none', display: 'block' }}
-                  allowFullScreen
-                  loading="lazy"
-                />
-              </div>
-              <p className="mt-3 text-center text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>
-                ข้อมูลจาก · <a href="https://www.udoncity.go.th/frontend/web/cctv/map" target="_blank" rel="noopener noreferrer"
-                  className="underline hover:opacity-70 transition-opacity" style={{ color: 'var(--color-brand)' }}>
-                  เทศบาลนครอุดรธานี
-                </a>
-              </p>
-            </div>
+            {/* Split Panel */}
+            <TrafficViewer />
 
             {/* Footer compact */}
-            <footer className="site-footer text-white mt-4">
-              <div className="max-w-5xl mx-auto px-4 md:px-8 py-7 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <footer className="site-footer text-white">
+              <div className="max-w-5xl mx-auto px-4 md:px-8 py-6 flex flex-col sm:flex-row justify-between items-center gap-4">
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-full overflow-hidden ring-1 ring-white/15">
                     <img src={iconKaew} alt="" className="w-full h-full object-cover"
@@ -905,7 +1066,7 @@ export default function App() {
                   </div>
                   <span className="font-bold text-[12px] tracking-widest text-white/80">KUKAEW RADIO FM 93.00</span>
                 </div>
-                <p className="text-[11px] text-white/30">© 2024 กู่แก้ววิทยุ. สงวนลิขสิทธิ์</p>
+                <p className="text-[11px] text-white/30">© 2024 กู่แก้วเรดิโอ. สงวนลิขสิทธิ์</p>
               </div>
             </footer>
           </motion.div>
@@ -973,7 +1134,7 @@ export default function App() {
                       <MapPin size={15} style={{ color: 'var(--color-brand)' }} />
                     </div>
                     <div>
-                      <p className="font-bold text-[13px]" style={{ color: 'var(--color-text-primary)' }}>กู่แก้ววิทยุ FM 93.00</p>
+                      <p className="font-bold text-[13px]" style={{ color: 'var(--color-text-primary)' }}>กู่แก้วเรดิโอ FM 93.00</p>
                       <p className="text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>อำเภอกู่แก้ว อุดรธานี</p>
                     </div>
                   </div>
@@ -995,7 +1156,7 @@ export default function App() {
                   </div>
                   <span className="font-bold text-[12px] tracking-widest text-white/80">KUKAEW RADIO FM 93.00</span>
                 </div>
-                <p className="text-[11px] text-white/30">© 2024 กู่แก้ววิทยุ. สงวนลิขสิทธิ์</p>
+                <p className="text-[11px] text-white/30">© 2024 กู่แก้วเรดิโอ. สงวนลิขสิทธิ์</p>
               </div>
             </footer>
           </motion.div>
