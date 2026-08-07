@@ -58,20 +58,61 @@ const CCTV_CAMERAS = [
 
 // ─── Traffic Viewer Component ─────────────────────────────────────────────────
 const UDON_CAMERAS = [
-  { name: 'วงเวียนกรมหลวงประจักษ์ศิลปาคม SPD',          param: 'อุดรธานี - วงเวียนกรมหลวงประจักษ์ศิลปาคม SPD' },
-  { name: 'แยกเซ็นทรัล',                                  param: 'อุดรธานี - แยกเซ็นทรัล' },
-  { name: 'แยกหน้าสถานีรถไฟ',                             param: 'อุดรธานี - แยกหน้าสถานีรถไฟ' },
-  { name: 'แยกสถานีรถไฟ ถนนประจักษ์',                     param: 'อุดรธานี - แยกสถานีรถไฟ ถนนประจักษ์' },
-  { name: 'แยกคอกม้า',                                    param: 'อุดรธานี - แยกคอกม้า' },
-  { name: 'แยกอาชีวศึกษา ด้านถนนประชารักษา',              param: 'อุดรธานี - แยกอาชีวศึกษา ด้านถนนประชารักษา' },
-  { name: 'แยกอาชีวศึกษา ด้านถนนเพาะนิยม',               param: 'อุดรธานี - แยกอาชีวศึกษา ด้านถนนเพาะนิยม' },
-  { name: 'แยกหน้าโรงเรียนอุดรพิทยานุกูล ถนนโพศรี',      param: 'อุดรธานี - แยกหน้าโรงเรียนอุดรพิทยานุกูล ถนนโพศรี' },
-  { name: 'แยก VT แหนมเนือง',                             param: 'อุดรธานี - แยก VTแหนมเนือง' },
-  { name: 'แยกต้อยลาบเป็ด',                               param: 'อุดรธานี - แยกต้อยลาบเป็ด' },
+  { name: 'วงเวียนกรมหลวงประจักษ์ศิลปาคม SPD',          label: 'อุดรธานี - วงเวียนกรมหลวงประจักษ์ศิลปาคม SPD' },
+  { name: 'แยกเซ็นทรัล',                                  label: 'อุดรธานี - แยกเซ็นทรัล' },
+  { name: 'แยกหน้าสถานีรถไฟ',                             label: 'อุดรธานี - แยกหน้าสถานีรถไฟ' },
+  { name: 'แยกสถานีรถไฟ ถนนประจักษ์',                     label: 'อุดรธานี - แยกสถานีรถไฟ ถนนประจักษ์' },
+  { name: 'แยกคอกม้า',                                    label: 'อุดรธานี - แยกคอกม้า' },
+  { name: 'แยกอาชีวศึกษา ด้านถนนประชารักษา',              label: 'อุดรธานี - แยกอาชีวศึกษา ด้านถนนประชารักษา' },
+  { name: 'แยกอาชีวศึกษา ด้านถนนเพาะนิยม',               label: 'อุดรธานี - แยกอาชีวศึกษา ด้านถนนเพาะนิยม' },
+  { name: 'แยกหน้าโรงเรียนอุดรพิทยานุกูล ถนนโพศรี',      label: 'อุดรธานี - แยกหน้าโรงเรียนอุดรพิทยานุกูล ถนนโพศรี' },
+  { name: 'แยก VT แหนมเนือง',                             label: 'อุดรธานี - แยก VTแหนมเนือง' },
+  { name: 'แยกต้อยลาบเป็ด',                               label: 'อุดรธานี - แยกต้อยลาบเป็ด' },
 ];
 
 function TrafficViewer() {
   const [selected, setSelected] = useState(UDON_CAMERAS[0]);
+  const [ready, setReady] = useState(false);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const pendingLabel = useRef<string>(UDON_CAMERAS[0].label);
+
+  // inject dropdown selection into iframe
+  const injectSelect = (label: string) => {
+    try {
+      const doc = iframeRef.current?.contentDocument;
+      if (!doc) return false;
+      const sel = doc.querySelector('select') as HTMLSelectElement | null;
+      if (!sel) return false;
+      const opt = Array.from(sel.options).find(o => o.text.trim() === label || o.value.trim() === label);
+      if (!opt) return false;
+      sel.value = opt.value;
+      sel.dispatchEvent(new Event('change', { bubbles: true }));
+      return true;
+    } catch { return false; }
+  };
+
+  // on iframe load: wait for JS init, then inject
+  const handleLoad = () => {
+    setReady(false);
+    setTimeout(() => {
+      const ok = injectSelect(pendingLabel.current);
+      setReady(ok);
+    }, 1200);
+  };
+
+  // when user picks camera
+  const handleSelect = (cam: typeof UDON_CAMERAS[0]) => {
+    setSelected(cam);
+    pendingLabel.current = cam.label;
+    if (ready) {
+      injectSelect(cam.label);
+    } else {
+      // iframe not ready — reload with query hint
+      if (iframeRef.current) {
+        iframeRef.current.src = `https://khonkaenlink.info/cctv/?cam=${encodeURIComponent(cam.label)}`;
+      }
+    }
+  };
 
   return (
     <div className="flex-1 flex flex-col md:flex-row gap-4 px-4 md:px-6 py-5 max-w-7xl mx-auto w-full">
@@ -79,7 +120,6 @@ function TrafficViewer() {
       {/* Camera list sidebar */}
       <div className="md:w-64 lg:w-72 flex-shrink-0 flex flex-col overflow-hidden"
         style={{ borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border)', background: 'var(--color-surface)', boxShadow: 'var(--shadow-card)' }}>
-        {/* Header */}
         <div className="px-4 py-3 flex items-center gap-2" style={{ borderBottom: '1px solid var(--color-border)' }}>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--color-brand)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/>
@@ -91,12 +131,11 @@ function TrafficViewer() {
           </span>
         </div>
 
-        {/* List */}
         <div className="overflow-y-auto flex-1">
           {UDON_CAMERAS.map((cam, i) => {
-            const active = selected.param === cam.param;
+            const active = selected.label === cam.label;
             return (
-              <button key={i} onClick={() => setSelected(cam)}
+              <button key={i} onClick={() => handleSelect(cam)}
                 className="w-full text-left flex items-center gap-3 px-4 py-3 transition-all"
                 style={{
                   borderBottom: '1px solid var(--color-border)',
@@ -122,21 +161,20 @@ function TrafficViewer() {
 
       {/* Video panel */}
       <div className="flex-1 flex flex-col gap-2 min-h-[400px]">
-        {/* Label */}
         <div className="flex items-center gap-2 px-1">
           <span className="w-2 h-2 rounded-full" style={{ background: '#22c55e' }} />
           <span className="font-bold text-[13px]" style={{ color: 'var(--color-text-primary)' }}>{selected.name}</span>
           <span className="badge-live ml-2"><span className="dot" />LIVE</span>
         </div>
 
-        {/* iframe — ซ่อน header + dropdown ของ khonkaenlink */}
         <div className="flex-1 overflow-hidden"
           style={{ borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-card)', minHeight: '400px', background: '#111', position: 'relative' }}>
           <div style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
             <iframe
-              key={selected.param}
-              src={`https://khonkaenlink.info/cctv/?cam=${encodeURIComponent(selected.param)}`}
-              title={selected.name}
+              ref={iframeRef}
+              src={`https://khonkaenlink.info/cctv/?cam=${encodeURIComponent(UDON_CAMERAS[0].label)}`}
+              title="CCTV อุดรธานี"
+              onLoad={handleLoad}
               style={{
                 border: 'none',
                 display: 'block',
@@ -160,6 +198,7 @@ function TrafficViewer() {
     </div>
   );
 }
+
 
 // ─── Traffic Map Component ────────────────────────────────────────────────────
 function TrafficMap() {
