@@ -1,17 +1,25 @@
 import { useState, useRef, useEffect } from 'react';
 import iconKaew from './images/icon-kaew.png';
 import photo1 from './images/photo-1.png';
+import sponsorKaowtong from './images/sponsor-kaowtong.png';
+import sponsorHomcoffee from './images/sponsor-homcoffee.png';
+import sponsorBiotea from './images/sponsor-biotea.png';
 import { cameras } from './cameras';
 
-const STREAM_URL = 'https://uk5freenew.listen2myradio.com/live.mp3?typeportmount=s1_13082_stream_820118366';
+const STREAM_URL = 'https://uk5freenew.listen2myradio.com/live.mp3?typeportmount=s1_13082_stream_782192778';
+const MIRROR_URLS = [
+  'https://fm93kukeawradio.radio12345.com/',
+  'https://fm93kukeawradio.radiostream321.com/',
+  'https://fm93kukeawradio.radiostream123.com/',
+];
 const BAR_HEIGHTS = [14, 28, 18, 36, 22, 40, 16, 32, 24, 38, 12, 30, 20, 34];
 
-type Page = 'home' | 'traffic' | 'contact';
+type Page = 'home' | 'traffic' | 'contact' | 'sponsors';
 
 function navBtnStyle(active: boolean): React.CSSProperties {
   return active
-    ? { padding: '9px 16px', borderRadius: 999, border: 'none', background: '#fff', color: '#659287', fontWeight: 700, fontSize: 14, cursor: 'pointer', whiteSpace: 'nowrap' }
-    : { padding: '9px 16px', borderRadius: 999, border: '1px solid rgba(255,255,255,0.35)', background: 'transparent', color: 'rgba(255,255,255,0.85)', fontWeight: 700, fontSize: 14, cursor: 'pointer', whiteSpace: 'nowrap' };
+    ? { padding: '8px 13px', borderRadius: 999, border: 'none', background: '#fff', color: '#659287', fontWeight: 700, fontSize: 'clamp(11px,3vw,14px)' as any, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }
+    : { padding: '8px 13px', borderRadius: 999, border: '1px solid rgba(255,255,255,0.35)', background: 'transparent', color: 'rgba(255,255,255,0.85)', fontWeight: 700, fontSize: 'clamp(11px,3vw,14px)' as any, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 };
 }
 
 export default function App() {
@@ -26,11 +34,13 @@ export default function App() {
   const [camStatus, setCamStatus] = useState<'loading' | 'playing' | 'error'>('loading');
   const [showShopeeButton, setShowShopeeButton] = useState(true);
   const [cameraFilter, setCameraFilter] = useState('');
+  const [mirrorIndex, setMirrorIndex] = useState(0);
 
   const audioRef = useRef<HTMLAudioElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<any>(null);
   const stallTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const loadWatchdogRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const intentionalStopRef = useRef(false);
 
   useEffect(() => {
@@ -41,6 +51,7 @@ export default function App() {
     return () => {
       if (hlsRef.current) { try { hlsRef.current.destroy(); } catch (e) {} }
       if (stallTimerRef.current) clearTimeout(stallTimerRef.current);
+      if (loadWatchdogRef.current) clearTimeout(loadWatchdogRef.current);
       const a = audioRef.current;
       if (a) { a.pause(); a.src = ''; }
     };
@@ -57,49 +68,89 @@ export default function App() {
   const clearStall = () => {
     if (stallTimerRef.current) { clearTimeout(stallTimerRef.current); stallTimerRef.current = null; }
   };
+  const clearLoadWatchdog = () => {
+    if (loadWatchdogRef.current) { clearTimeout(loadWatchdogRef.current); loadWatchdogRef.current = null; }
+  };
 
   const handleCanPlay = () => clearStall();
-  const handlePlaying = () => { clearStall(); setIsLoading(false); setIsPlaying(true); };
+  const handlePlaying = () => { clearStall(); clearLoadWatchdog(); setIsLoading(false); setIsPlaying(true); };
+
+  // If the stream genuinely can't connect (rare, but some networks block
+  // it), open the station's real listener page in a new tab instead — a
+  // direct top-level navigation from this tap is allowed to autoplay with
+  // sound, which an invisible embedded copy of that page is not.
+  const handleStreamFailed = () => {
+    if (intentionalStopRef.current) return;
+    const a = audioRef.current;
+    // Guard against a false alarm: if audio is genuinely still playing, do
+    // nothing instead of popping an error over a song that's actually fine.
+    if (a && !a.paused && !a.ended && a.readyState > 2) { clearStall(); clearLoadWatchdog(); return; }
+    clearStall();
+    clearLoadWatchdog();
+    setIsPlaying(false); setIsLoading(false); setShowErrorModal(true);
+  };
+
   const handleStall = () => {
     if (intentionalStopRef.current) return;
     clearStall();
+    // Live radio streams buffer briefly all the time — 'waiting'/'stalled'
+    // fire for that routinely. Only treat it as a real failure if audio is
+    // STILL not actually advancing after a long wait.
+    const a = audioRef.current;
+    const startTime = a ? a.currentTime : 0;
     stallTimerRef.current = setTimeout(() => {
-      if (!intentionalStopRef.current) { setIsPlaying(false); setIsLoading(false); setShowErrorModal(true); }
-    }, 8000);
+      if (intentionalStopRef.current) return;
+      const a2 = audioRef.current;
+      if (a2 && !a2.paused && a2.currentTime > startTime) return;
+      handleStreamFailed();
+    }, 10000);
   };
   const handleError = () => {
-    if (!intentionalStopRef.current) { setIsPlaying(false); setIsLoading(false); setShowErrorModal(true); }
-  };
-
-  const loadStream = () => {
-    const a = audioRef.current;
-    if (!a) return;
-    a.src = STREAM_URL + '&t=' + Date.now();
-    a.load();
+    if (!intentionalStopRef.current) handleStreamFailed();
   };
 
   const togglePlay = () => {
     const a = audioRef.current;
     if (!a) return;
-    if (isPlaying) {
+    if (isPlaying || isLoading) {
       intentionalStopRef.current = true;
       clearStall();
+      clearLoadWatchdog();
       a.pause(); a.src = ''; a.load();
       setIsPlaying(false); setIsLoading(false);
       setTimeout(() => { intentionalStopRef.current = false; }, 400);
     } else {
       intentionalStopRef.current = false;
       setIsLoading(true); setShowErrorModal(false);
-      loadStream();
+      a.src = STREAM_URL + '&t=' + Date.now();
+      a.load();
+      // Watchdog: some mobile/SIM networks hang the connection silently —
+      // no 'stalled'/'waiting'/error ever fires, so the spinner would spin
+      // forever without this hard timeout.
+      clearLoadWatchdog();
+      loadWatchdogRef.current = setTimeout(() => handleStreamFailed(), 12000);
       a.play().then(() => {
-        setIsPlaying(true); setIsLoading(false);
+        // Normally the 'playing' event (handlePlaying) clears loading, but
+        // some browsers don't fire it reliably on live streams — fall back
+        // to checking actual playback progress shortly after play resolves.
+        setTimeout(() => {
+          const a2 = audioRef.current;
+          if (a2 && !a2.paused && a2.currentTime > 0 && isLoading) {
+            clearLoadWatchdog();
+            setIsLoading(false); setIsPlaying(true);
+          }
+        }, 1500);
       }).catch((err) => {
-        if (err.name !== 'AbortError') { setIsPlaying(false); setIsLoading(false); setShowErrorModal(true); }
+        if (err.name !== 'AbortError') handleStreamFailed();
       });
     }
   };
 
   const retryPlay = () => { setShowErrorModal(false); setTimeout(() => togglePlay(), 300); };
+  // Mirror pages to try inside the modal itself — never a new tab. Some of
+  // these refuse to be embedded (X-Frame-Options); the button cycles.
+  const nextMirror = () => setMirrorIndex((i) => (i + 1) % MIRROR_URLS.length);
+  const closeErrorModal = () => { setShowErrorModal(false); setMirrorIndex(0); };
 
   const toggleMute = () => {
     setIsMuted((prev) => {
@@ -203,10 +254,11 @@ export default function App() {
             081-985-3404
           </a>
 
-          <nav aria-label="เมนูหลัก" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center', flex: '1 1 100%', order: 3 }}>
+          <nav aria-label="เมนูหลัก" style={{ display: 'flex', gap: 6, flexWrap: 'nowrap', justifyContent: 'center', flex: '1 1 100%', order: 3, overflowX: 'auto', padding: '2px 0' }}>
             <button onClick={() => setPage('home')} style={navBtnStyle(page === 'home')}>หน้าแรก</button>
             <button onClick={() => setPage('traffic')} style={navBtnStyle(page === 'traffic')}>ดูกล้องจราจร</button>
             <button onClick={() => setPage('contact')} style={navBtnStyle(page === 'contact')}>ติดต่อเรา</button>
+            <button onClick={() => setPage('sponsors')} style={navBtnStyle(page === 'sponsors')}>ผู้สนับสนุน</button>
           </nav>
         </div>
       </header>
@@ -430,6 +482,43 @@ export default function App() {
         </div>
       )}
 
+      {/* SPONSORS */}
+      {page === 'sponsors' && (
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#F7F4ED' }}>
+          <section style={{ background: 'linear-gradient(160deg,#659287 0%,#88BDA4 100%)', padding: '26px 20px' }}>
+            <div style={{ maxWidth: 820, margin: '0 auto' }}>
+              <p style={{ margin: '0 0 4px', color: 'rgba(255,255,255,0.75)', fontSize: 12, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>ขอบคุณผู้สนับสนุน</p>
+              <h1 style={{ margin: '0 0 4px', color: '#fff', fontSize: 'clamp(1.4rem,3vw,1.9rem)', fontWeight: 800 }}>ผู้สนับสนุนสถานี</h1>
+              <p style={{ margin: 0, color: 'rgba(255,255,255,0.85)', fontSize: 13 }}>กู่แก้วเรดิโอ FM 93.00 MHz · อุดรธานี</p>
+            </div>
+          </section>
+
+          <div style={{ maxWidth: 900, margin: '0 auto', width: '100%', padding: '28px 20px 40px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+            <div className="sponsor-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 16 }}>
+              {[
+                { img: sponsorKaowtong, name: 'สมุนไพรคาวตอง ยศ สุนทร', tel: '081-985-3404', href: 'tel:0819853404' },
+                { img: sponsorHomcoffee, name: 'กาแฟ ฮอมคอฟฟี่', tel: '081-985-3404', href: 'tel:0819853404' },
+                { img: sponsorBiotea, name: 'ไบโอทีโปร', tel: '087-858-2929', href: 'tel:0878582929' },
+              ].map((sp) => (
+                <div key={sp.name} style={{ background: '#fff', border: '1px solid #E6E1D6', borderRadius: 16, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                  <img src={sp.img} alt={sp.name} style={{ width: '100%', aspectRatio: '1', objectFit: 'cover' }} />
+                  <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
+                    <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#23261F' }}>{sp.name}</h3>
+                    <a href={sp.href} style={{ marginTop: 'auto', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: '#88BDA4', color: '#2F4A43', fontWeight: 800, fontSize: 14, padding: '9px 16px', borderRadius: 12, textDecoration: 'none' }}>{sp.tel}</a>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ background: '#E6F2DD', border: '1px solid #B1D3B9', borderRadius: 16, padding: 20 }}>
+              <h3 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 800, color: '#23261F' }}>สนใจเป็นผู้สนับสนุนรายการ?</h3>
+              <p style={{ margin: '0 0 14px', fontSize: 14, lineHeight: 1.65, color: '#3D4335' }}>สถานีวิทยุกู่แก้วเรดิโอ FM 93.00 MHz เปิดรับผู้สนับสนุนรายการ ติดต่อสอบถามอัตราและแพ็กเกจได้โดยตรง</p>
+              <a href="tel:0819853404" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#88BDA4', color: '#2F4A43', fontWeight: 800, fontSize: 14, padding: '11px 20px', borderRadius: 12, textDecoration: 'none' }}>โทร 081-985-3404</a>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* FOOTER */}
       <footer style={{ background: '#2F4A43', color: '#fff', marginTop: 'auto' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', padding: '30px 20px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: 24 }}>
@@ -454,7 +543,7 @@ export default function App() {
               <a href="#" aria-label="Facebook" style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="#fff"><path d="M22 12a10 10 0 1 0-11.5 9.87v-6.99h-2.5v-2.88h2.5V9.41c0-2.5 1.49-3.89 3.77-3.89 1.09 0 2.24.2 2.24.2v2.48h-1.26c-1.24 0-1.63.77-1.63 1.56v1.87h2.78l-.44 2.88h-2.34v6.99A10 10 0 0 0 22 12z" /></svg>
               </a>
-              <a href="https://s.shopee.co.th/30lJC2Kxaa?share_channel_code=6" target="_blank" rel="noopener noreferrer" aria-label="Shopee" style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <a href="https://collshp.com/adthachai943/category/3857411?view=storefront" target="_blank" rel="noopener noreferrer" aria-label="Shopee" style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <img src="https://cdn.simpleicons.org/shopee/FFFFFF" alt="" style={{ width: 15, height: 15 }} />
               </a>
               <a href="#" aria-label="Youtube" style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -471,7 +560,7 @@ export default function App() {
       {/* SHOPEE FLOATING BUTTON */}
       {showShopeeButton && (
         <div style={{ position: 'fixed', left: 16, top: 132, zIndex: 60 }}>
-          <a href="https://s.shopee.co.th/30lJC2Kxaa?share_channel_code=6" target="_blank" rel="noopener noreferrer" aria-label="ร้านค้า Shopee" style={{ width: 48, height: 48, borderRadius: '50%', background: '#EE4D2D', border: '2px solid #fff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 5px 16px rgba(238,77,45,0.4)', textDecoration: 'none' }}>
+          <a href="https://collshp.com/adthachai943/category/3857411?view=storefront" target="_blank" rel="noopener noreferrer" aria-label="ร้านค้า Shopee" style={{ width: 48, height: 48, borderRadius: '50%', background: '#EE4D2D', border: '2px solid #fff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 5px 16px rgba(238,77,45,0.4)', textDecoration: 'none' }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /><path d="M3 6h18" /><path d="M16 10a4 4 0 0 1-8 0" /></svg>
           </a>
           <button onClick={() => setShowShopeeButton(false)} aria-label="ปิดปุ่มร้านค้า" style={{ position: 'absolute', top: -6, right: -6, width: 22, height: 22, borderRadius: '50%', background: '#fff', border: '2px solid #E6E1D6', color: '#6B7263', fontSize: 12, fontWeight: 800, lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0 }}>×</button>
@@ -481,15 +570,13 @@ export default function App() {
       {/* ERROR MODAL */}
       {showErrorModal && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-          <div onClick={() => setShowErrorModal(false)} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)' }} />
-          <div style={{ position: 'relative', background: '#fff', borderRadius: 22, padding: 24, maxWidth: 340, width: '100%', textAlign: 'center', boxShadow: '0 16px 44px rgba(0,0,0,0.28)' }}>
-            <div style={{ width: 52, height: 52, borderRadius: '50%', background: '#FBEAE8', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#C0392B" strokeWidth="2"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
-            </div>
-            <h3 style={{ margin: '0 0 8px', fontSize: 17, fontWeight: 800, color: '#23261F' }}>ฟังไม่ได้ในขณะนี้</h3>
-            <p style={{ margin: '0 0 16px', fontSize: 14, lineHeight: 1.6, color: '#6B7263' }}>ขออภัย ระบบไม่สามารถเชื่อมต่อสัญญาณได้ กรุณาลองใหม่อีกครั้ง</p>
-            <button onClick={retryPlay} style={{ width: '100%', padding: 12, border: 'none', borderRadius: 12, background: '#88BDA4', color: '#2F4A43', fontWeight: 800, fontSize: 14, marginBottom: 8, cursor: 'pointer' }}>ลองใหม่</button>
-            <button onClick={() => setShowErrorModal(false)} style={{ width: '100%', padding: 12, border: 'none', borderRadius: 12, background: '#F0EEE7', color: '#6B7263', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>ปิด</button>
+          <div onClick={closeErrorModal} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)' }} />
+          <div style={{ position: 'relative', background: '#fff', borderRadius: 22, padding: 20, maxWidth: 420, width: '100%', textAlign: 'center', boxShadow: '0 16px 44px rgba(0,0,0,0.28)' }}>
+            <h3 style={{ margin: '0 0 6px', fontSize: 17, fontWeight: 800, color: '#23261F' }}>ฟังไม่ได้ในขณะนี้</h3>
+            <p style={{ margin: '0 0 12px', fontSize: 14, lineHeight: 1.6, color: '#6B7263' }}>กำลังโหลดเว็บสำรองให้ด้านล่างนี้ — หากไม่แสดงผล กดปุ่ม "ลองเว็บสำรองถัดไป"</p>
+            <iframe key={mirrorIndex} src={MIRROR_URLS[mirrorIndex]} title="สถานีกู่แก้วเรดิโอสำรอง" style={{ width: '100%', height: 360, border: 0, borderRadius: 14, marginBottom: 10 }} />
+            <button onClick={nextMirror} style={{ width: '100%', padding: 12, border: 'none', borderRadius: 12, background: '#88BDA4', color: '#2F4A43', fontWeight: 800, fontSize: 14, marginBottom: 8, cursor: 'pointer' }}>ลองเว็บสำรองถัดไป</button>
+            <button onClick={closeErrorModal} style={{ width: '100%', padding: 12, border: 'none', borderRadius: 12, background: '#F0EEE7', color: '#6B7263', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>ปิด</button>
           </div>
         </div>
       )}
