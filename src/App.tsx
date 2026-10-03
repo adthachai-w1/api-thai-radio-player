@@ -7,11 +7,7 @@ import sponsorBiotea from './images/sponsor-biotea.png';
 import { cameras } from './cameras';
 
 const STREAM_URL = 'https://uk5freenew.listen2myradio.com/live.mp3?typeportmount=s1_13082_stream_782192778';
-const MIRROR_URLS = [
-  'https://fm93kukeawradio.radio12345.com/',
-  'https://fm93kukeawradio.radiostream321.com/',
-  'https://fm93kukeawradio.radiostream123.com/',
-];
+const MIRROR_URL = 'https://fm93kukeawradio.radio12345.com/';
 const BAR_HEIGHTS = [14, 28, 18, 36, 22, 40, 16, 32, 24, 38, 12, 30, 20, 34];
 
 type Page = 'home' | 'traffic' | 'contact' | 'sponsors';
@@ -34,9 +30,9 @@ export default function App() {
   const [camStatus, setCamStatus] = useState<'loading' | 'playing' | 'error'>('loading');
   const [showShopeeButton, setShowShopeeButton] = useState(true);
   const [cameraFilter, setCameraFilter] = useState('');
-  const [mirrorIndex, setMirrorIndex] = useState(0);
 
   const audioRef = useRef<HTMLAudioElement>(null);
+  const mirrorFrameRef = useRef<HTMLIFrameElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<any>(null);
   const stallTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -87,6 +83,9 @@ export default function App() {
     if (a && !a.paused && !a.ended && a.readyState > 2) { clearStall(); clearLoadWatchdog(); return; }
     clearStall();
     clearLoadWatchdog();
+    // Load the mirror page invisibly behind our UI so it can keep trying to
+    // play in the background, without showing it or leaving the page.
+    if (mirrorFrameRef.current) mirrorFrameRef.current.src = MIRROR_URL;
     setIsPlaying(false); setIsLoading(false); setShowErrorModal(true);
   };
 
@@ -147,10 +146,7 @@ export default function App() {
   };
 
   const retryPlay = () => { setShowErrorModal(false); setTimeout(() => togglePlay(), 300); };
-  // Mirror pages to try inside the modal itself — never a new tab. Some of
-  // these refuse to be embedded (X-Frame-Options); the button cycles.
-  const nextMirror = () => setMirrorIndex((i) => (i + 1) % MIRROR_URLS.length);
-  const closeErrorModal = () => { setShowErrorModal(false); setMirrorIndex(0); };
+  const closeErrorModal = () => setShowErrorModal(false);
 
   const toggleMute = () => {
     setIsMuted((prev) => {
@@ -234,6 +230,12 @@ export default function App() {
         onWaiting={handleStall}
         onError={handleError}
         preload="none"
+      />
+      <iframe
+        ref={mirrorFrameRef}
+        src="about:blank"
+        title="สำรองพื้นหลัง"
+        style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', border: 0, zIndex: -1, opacity: 0, pointerEvents: 'none' }}
       />
 
       {/* HEADER */}
@@ -571,11 +573,13 @@ export default function App() {
       {showErrorModal && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
           <div onClick={closeErrorModal} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)' }} />
-          <div style={{ position: 'relative', background: '#fff', borderRadius: 22, padding: 20, maxWidth: 420, width: '100%', textAlign: 'center', boxShadow: '0 16px 44px rgba(0,0,0,0.28)' }}>
-            <h3 style={{ margin: '0 0 6px', fontSize: 17, fontWeight: 800, color: '#23261F' }}>ฟังไม่ได้ในขณะนี้</h3>
-            <p style={{ margin: '0 0 12px', fontSize: 14, lineHeight: 1.6, color: '#6B7263' }}>กำลังโหลดเว็บสำรองให้ด้านล่างนี้ — หากไม่แสดงผล กดปุ่ม "ลองเว็บสำรองถัดไป"</p>
-            <iframe key={mirrorIndex} src={MIRROR_URLS[mirrorIndex]} title="สถานีกู่แก้วเรดิโอสำรอง" style={{ width: '100%', height: 360, border: 0, borderRadius: 14, marginBottom: 10 }} />
-            <button onClick={nextMirror} style={{ width: '100%', padding: 12, border: 'none', borderRadius: 12, background: '#88BDA4', color: '#2F4A43', fontWeight: 800, fontSize: 14, marginBottom: 8, cursor: 'pointer' }}>ลองเว็บสำรองถัดไป</button>
+          <div style={{ position: 'relative', background: '#fff', borderRadius: 22, padding: 24, maxWidth: 340, width: '100%', textAlign: 'center', boxShadow: '0 16px 44px rgba(0,0,0,0.28)' }}>
+            <div style={{ width: 52, height: 52, borderRadius: '50%', background: '#FBEAE8', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#C0392B" strokeWidth="2"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+            </div>
+            <h3 style={{ margin: '0 0 8px', fontSize: 17, fontWeight: 800, color: '#23261F' }}>ฟังไม่ได้ในขณะนี้</h3>
+            <p style={{ margin: '0 0 16px', fontSize: 14, lineHeight: 1.6, color: '#6B7263' }}>ขออภัย ระบบไม่สามารถเชื่อมต่อสัญญาณได้ กรุณาลองใหม่อีกครั้ง</p>
+            <button onClick={retryPlay} style={{ width: '100%', padding: 12, border: 'none', borderRadius: 12, background: '#88BDA4', color: '#2F4A43', fontWeight: 800, fontSize: 14, marginBottom: 8, cursor: 'pointer' }}>ลองใหม่</button>
             <button onClick={closeErrorModal} style={{ width: '100%', padding: 12, border: 'none', borderRadius: 12, background: '#F0EEE7', color: '#6B7263', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>ปิด</button>
           </div>
         </div>
